@@ -50,7 +50,16 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // import frc.robot.subsystems.DriveSubsystem;
 // import frc.robot.Mechanism;
 
-/*Basic Camera Code*/
+/*Basic Camera Imports*/
+//import edu.wpi.first.cameraserver.CameraServer;
+
+/*Advanced Camera Imports*/
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
+import edu.wpi.first.cscore.CvSink;
+import edu.wpi.first.cscore.CvSource;
+import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
 
 // import java.io.IOException;
@@ -155,8 +164,31 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
-    CameraServer.getInstance().startAutomaticCapture();
+   //Basic Camera 
+    //CameraServer.getInstance().startAutomaticCapture();
+
+    //Advanced Camera
+    new Thread(() -> {
+      UsbCamera camera = CameraServer.startAutomaticCapture();
+      camera.setResolution(640, 480);
+
+      CvSink cvSink = CameraServer.getVideo();
+      CvSource outputStream = CameraServer.putVideo("Blur", 640, 480);
+
+      Mat source = new Mat();
+      Mat output = new Mat();
+
+      while(!Thread.interrupted()) {
+        if (cvSink.grabFrame(source) == 0) {
+          continue;
+        }
+        Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+        outputStream.putFrame(output);
+      }
+    }).start();
   }
+
+  
 
   /**
    * This function is called every robot packet, no matter the mode. Use
