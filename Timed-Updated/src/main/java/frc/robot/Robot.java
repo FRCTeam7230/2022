@@ -65,14 +65,15 @@ public class Robot extends TimedRobot {
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private Joystick m_stick = new Joystick(0);
- private DriveSubsystem m_robotDrive = new DriveSubsystem();
- private FindPath fp = new FindPath();
+  // Pathweaver related
+  private DriveSubsystem m_robotDrive = new DriveSubsystem();
+  private FindPath fp = new FindPath();
 //  private Button buttonA = new Button();
 
-  private Mechanism intake = new Mechanism("button",0,5,6,1,2,50);
-  private Mechanism conveyer = new Mechanism("button",0,7,8,3,4,50);
-  private Mechanism shooter = new Mechanism("button",0,9,10,5,6,50);
-  private Mechanism climb = new Mechanism("button", 0,11,12,7,8,50);
+  // private Mechanism intake = new Mechanism("button",0,5,6,1,2,50);
+  // private Mechanism conveyer = new Mechanism("button",0,7,8,3,4,50);
+  // private Mechanism shooter = new Mechanism("button",0,9,10,5,6,50);
+  // private Mechanism climb = new Mechanism("button", 0,11,12,7,8,50);
   /*
   BUTTONS:
   A - 1
@@ -93,7 +94,7 @@ public class Robot extends TimedRobot {
    // String trajectoryJSON = "C:\\Users\\Johnathan\\FRC\\Timed-Imported\\src\\main\\deploy\\paths\\loopdeloop.wpilib.json";
             
    
-   
+  //  Pathweaver
    RamseteIterative ramsete = new RamseteIterative(
        fp.getPath(),
        m_robotDrive::getPose,
@@ -151,7 +152,6 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
-    
   }
 
   /**
@@ -224,71 +224,65 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
 
     //establishes minimum and maximums of deadzone
-    final double deadZone=0.5;
+    final double deadZone=0.4;
     final double minZone=0.07;
-
+    final double invertAxis = 1;
+    final double xOffset = 0.0;
     //gets joystick values and creates curves
     double y = m_stick.getRawAxis(1);
-    double yprime = -Math.pow(y,3);
+    double yprime = invertAxis * Math.pow(y,3);
       // double yprime=-y;
-    double x = m_stick.getRawAxis(4);
+    double x = m_stick.getRawAxis(2);
     double xprime = Math.pow(x,3);
       // double xprime=x;
-    
+    double accelFactor = 2.0;
+    double slowFactor = 0.85;
     //The % power used
-    final double speedLimit = 0.8;
-    final double turnLimit=0.5;
-
+    final double turnLimit = 0.4;
+    double speedLimit=0.5;
+    final double leftAdj = 1.3;
     //Reports joystick numbers
-    DriverStation.reportWarning("Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
-    
-    //Button stuff
-
-      //Button A
-      if(true)
-      {
-  
-      }
-
-
-
-
-
-
-
+    DriverStation.reportWarning("Raw Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
     //Mathmomagic! For X and Y 
+    // Y is turn for now
     if(minZone<Math.abs(yprime)){
       // yprime=deadZone*Math.signum(yprime);
-        yprime=Math.abs(yprime)/yprime*(deadZone+speedLimit*(1-deadZone)*(Math.abs(y)-0.1)/0.9);
-        //DriverStation.reportWarning("BANANA"+((Double)Math.abs(yprime)).toString(),true);
+        yprime=(Math.abs(yprime)/yprime)*(deadZone+speedLimit*(1-deadZone)*(Math.abs(yprime))/(0.9));
+        
+        // DriverStation.reportWarning("BANANA"+((Double)Math.abs(yprime)).toString(),true);
     }
     else{
       yprime=0;
     }
+    // X is throttle for now
     if(minZone<Math.abs(xprime)){
       xprime=Math.abs(xprime)/xprime*(deadZone+turnLimit*(1-deadZone)*(Math.abs(x)-0.1)/0.9);
+      // if (yprime<0){
+      //   yprime*=leftAdj;
+      // }
         //DriverStation.reportWarning("KIWI"+((Double)Math.abs(xprime)).toString(),true);
     }
     else{
       xprime=0;
     }
-
-
-
+    DriverStation.reportWarning("New Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
+    // R Bumper is 6
+    if(m_stick.getRawButton(5)){
+      yprime*=accelFactor;
+    }
+    
+    if(m_stick.getRawButton(6)){
+      yprime*=slowFactor;
+      xprime*=slowFactor; 
+    }
     //Actual drive part
     
     // if(Math.abs(xprime)<0.2)
     //   rc.m_robotDrive.arcadeDrive(yprime, rc.m_robotDrive.getTurnRate()*Math.signum(xprime));
     // else
-      m_robotDrive.arcadeDrive(yprime, xprime);
+      // m_robotDrive.arcadeDrive(yprime, xprime+xOffset);
+      m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
     
-
-    
-
-
-
-
-
 
     // if(0<m_stick.getRawAxis(4) && m_stick.getRawAxis(4)<-deadZone){
     //   x=deadZone;
@@ -298,20 +292,20 @@ public class Robot extends TimedRobot {
     // }
     //if(m_stick.getRawAxis(4)>10)
     // flywheel.arcadeDrive(1,0);
-     intake.run();
-     conveyer.run();
-     shooter.run();
-     climb.run();
+    //  intake.run();
+    //  conveyer.run();
+    //  shooter.run();
+    //  climb.run();
 
-    if(m_stick.getRawButton(1)){
-      if(Limelight.isTarget())
-        if(Limelight.getTx()!=0)
-          m_robotDrive.arcadeDrive(0,Limelight.getTx()*.1);
-        else
-          m_robotDrive.arcadeDrive(0, 0);
-    }
-    else
-    m_robotDrive.arcadeDrive(-Math.pow(y,3)*.8, Math.pow(x,3)*.8);
+    // if(m_stick.getRawButton(1)){
+    //   if(Limelight.isTarget())
+    //     if(Limelight.getTx()!=0)
+    //       m_robotDrive.arcadeDrive(0,Limelight.getTx()*.1);
+    //     else
+    //       m_robotDrive.arcadeDrive(0, 0);
+    // }
+    // else
+    // m_robotDrive.arcadeDrive(-Math.pow(y,3)*.8, Math.pow(x,3)*.8);
 
     
   }
