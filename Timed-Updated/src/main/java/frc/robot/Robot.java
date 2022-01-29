@@ -50,6 +50,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // import frc.robot.subsystems.DriveSubsystem;
 // import frc.robot.Mechanism;
 
+/*Basic Camera Code*/
+import edu.wpi.first.cameraserver.CameraServer;
+
 // import java.io.IOException;
 // import java.nio.file.Paths;
 /**
@@ -152,6 +155,7 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+    CameraServer.getInstance().startAutomaticCapture();
   }
 
   /**
