@@ -27,6 +27,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.commands.TankDrive;
 // import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 
@@ -48,7 +49,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // import edu.wpi.first.wpilibj.motorcontrol.Spark;
 //import frc.robot.RobotContainer;
 // import frc.robot.subsystems.DriveSubsystem;
-// import frc.robot.Mechanism;
+import frc.robot.Mechanism;
+import frc.robot.commands.TankDrive;
+import frc.robot.subsystems.Drivetrain;
 
 /*Basic Camera Imports*/
 //import edu.wpi.first.cameraserver.CameraServer;
@@ -78,7 +81,9 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private Joystick m_stick = new Joystick(0);
   // Pathweaver related
+  private Drivetrain m_Drivetrain = new Drivetrain();
   private DriveSubsystem m_robotDrive = new DriveSubsystem();
+  private TankDrive m_tTankDrive = new TankDrive(m_Drivetrain);
   private FindPath fp = new FindPath();
 //  private Button buttonA = new Button();
 
@@ -97,15 +102,8 @@ public class Robot extends TimedRobot {
   Middle Button (L) - 7
   Middle Button ® - 8
   */
-
-
-  
-
     // Create config for trajectory
-    
    // String trajectoryJSON = "C:\\Users\\Johnathan\\FRC\\Timed-Imported\\src\\main\\deploy\\paths\\loopdeloop.wpilib.json";
-            
-   
   //  Pathweaver
    RamseteIterative ramsete = new RamseteIterative(
        fp.getPath(),
@@ -160,6 +158,7 @@ public class Robot extends TimedRobot {
    * used for any initialization code.
    */  @Override
   public void robotInit() {
+    m_tTankDrive.initialize();
     m_robotDrive.calibrate();
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
@@ -226,7 +225,6 @@ public class Robot extends TimedRobot {
     // }
     // catch (IOException e)
     // {}
-   
     ramsete.initialize();
   }
 
@@ -259,6 +257,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
 
+    m_tTankDrive.execute();
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
