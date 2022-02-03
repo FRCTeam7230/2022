@@ -50,6 +50,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 //import frc.robot.RobotContainer;
 // import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.Mechanism;
+import com.revrobotics.CANSparkMax;
 import frc.robot.commands.TankDrive;
 import frc.robot.subsystems.Drivetrain;
 
@@ -74,6 +75,7 @@ import edu.wpi.first.cameraserver.CameraServer;
  * creating this project, you must also update the build.gradle file in the
  * project.
  */
+
 public class Robot extends TimedRobot {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
@@ -81,29 +83,15 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private Joystick m_stick = new Joystick(0);
   // Pathweaver related
-  private Drivetrain m_Drivetrain = new Drivetrain();
+  // private Drivetrain m_Drivetrain = new Drivetrain();
   private DriveSubsystem m_robotDrive = new DriveSubsystem();
-  private TankDrive m_tTankDrive = new TankDrive(m_Drivetrain);
+  // Speed/turn adjustments in the TankDrive.java file
+  private TankDrive m_tTankDrive = new TankDrive(m_robotDrive);
   private FindPath fp = new FindPath();
-//  private Button buttonA = new Button();
-
-  // private Mechanism intake = new Mechanism("button",0,5,6,1,2,50);
-  // private Mechanism conveyer = new Mechanism("button",0,7,8,3,4,50);
-  // private Mechanism shooter = new Mechanism("button",0,9,10,5,6,50);
-  // private Mechanism climb = new Mechanism("button", 0,11,12,7,8,50);
-  /*
-  BUTTONS:
-  A - 1
-  B - 2
-  X - 3
-  Y - 4
-  L Shoulder Buttons - 5
-  R Shoulder Button - 6
-  Middle Button (L) - 7
-  Middle Button ® - 8
-  */
-    // Create config for trajectory
-   // String trajectoryJSON = "C:\\Users\\Johnathan\\FRC\\Timed-Imported\\src\\main\\deploy\\paths\\loopdeloop.wpilib.json";
+  private boolean tank = false;
+  private CANSparkMax shooterMotor = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
+  // Mechanism (mode id forward backward power)
+  // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
    RamseteIterative ramsete = new RamseteIterative(
        fp.getPath(),
@@ -119,20 +107,19 @@ public class Robot extends TimedRobot {
        // RamseteCommand passes volts to the callback
        m_robotDrive::tankDriveVolts
    );
-          
-    // An example trajectory to follow.  All units in meters.
-   
-    
-  // private Mechanism Intake = new Mechanism("button",0,5,6,1,2,50);
-  //private final Timer m_timer = new Timer();
-  //CANSparkMax l_motor1 = new CANSparkMax(1, MotorType.kBrushless);
-  //CANSparkMax r_motor1 = new CANSparkMax(2, MotorType.kBrushless);
-  //CANSparkMax l_motor2 = new CANSparkMax(3, MotorType.kBrushless);
-  //CANSparkMax r_motor2 = new CANSparkMax(4, MotorType.kBrushless);
-  //CANSparkMax l_flywheel = new CANSparkMax(5, MotorType.kBrushless);
-  //CANSparkMax r_flywheel = new CANSparkMax(6, MotorType.kBrushless);
-   //test
-  
+  public void runMechanism(CANSparkMax motor, int button, double power, boolean invert){
+    double newPower = power;
+    if (invert){
+      newPower*=-1;
+    }
+    if(m_stick.getRawButton(button)){
+        DriverStation.reportWarning("running fwd",true);
+        motor.set(newPower);
+    }
+    else{
+      motor.set(0);
+    }
+  } 
 
  /* public Spark getSpark(int motor)
   {
@@ -158,8 +145,11 @@ public class Robot extends TimedRobot {
    * used for any initialization code.
    */  @Override
   public void robotInit() {
-    m_tTankDrive.initialize();
+    if (tank){
+      m_tTankDrive.initialize();
+    }
     m_robotDrive.calibrate();
+    
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
@@ -199,9 +189,10 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
-    SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
-    SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
+      SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
+      SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
+      SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
+    
   }
 
   /**
@@ -256,8 +247,11 @@ public class Robot extends TimedRobot {
   
   @Override
   public void teleopPeriodic() {
-
+    if (tank){
     m_tTankDrive.execute();
+    }
+    // motor, button, power
+    runMechanism(shooterMotor, 4, 1.0, true);
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
@@ -311,38 +305,9 @@ public class Robot extends TimedRobot {
       xprime*=slowFactor; 
     }
     //Actual drive part
-    
-    // if(Math.abs(xprime)<0.2)
-    //   rc.m_robotDrive.arcadeDrive(yprime, rc.m_robotDrive.getTurnRate()*Math.signum(xprime));
-    // else
-      // m_robotDrive.arcadeDrive(yprime, xprime+xOffset);
+    if (!tank){
       m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
-    
-
-    // if(0<m_stick.getRawAxis(4) && m_stick.getRawAxis(4)<-deadZone){
-    //   x=deadZone;
-    // }
-    // else if(0>m_stick.getRawAxis(4) && m_stick.getRawAxis(4)>-deadZone){
-    //   x=-deadZone;
-    // }
-    //if(m_stick.getRawAxis(4)>10)
-    // flywheel.arcadeDrive(1,0);
-    //  intake.run();
-    //  conveyer.run();
-    //  shooter.run();
-    //  climb.run();
-
-    // if(m_stick.getRawButton(1)){
-    //   if(Limelight.isTarget())
-    //     if(Limelight.getTx()!=0)
-    //       m_robotDrive.arcadeDrive(0,Limelight.getTx()*.1);
-    //     else
-    //       m_robotDrive.arcadeDrive(0, 0);
-    // }
-    // else
-    // m_robotDrive.arcadeDrive(-Math.pow(y,3)*.8, Math.pow(x,3)*.8);
-
-    
+    }
   }
 
   /**

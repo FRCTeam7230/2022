@@ -127,6 +127,9 @@ public class DriveSubsystem extends SubsystemBase {
   }
   
 
+  public void drive(double left, double right) {
+    m_drive.tankDrive(left, right);
+}
   /**
    * Controls the left and right sides of the drive directly with voltages.
    *
