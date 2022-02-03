@@ -89,6 +89,8 @@ public class Robot extends TimedRobot {
   private TankDrive m_tTankDrive = new TankDrive(m_robotDrive);
   private FindPath fp = new FindPath();
   private boolean tank = false;
+  private static final String arcade = "arcad";
+  private static final String tankOption = "tank mod";
   private CANSparkMax shooterMotor = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
   // Mechanism (mode id forward backward power)
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
@@ -150,9 +152,9 @@ public class Robot extends TimedRobot {
     }
     m_robotDrive.calibrate();
     
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
-    SmartDashboard.putData("Auto choices", m_chooser);
+    m_chooser.setDefaultOption("Tank", tankOption);
+    m_chooser.addOption("Arcade", arcade);
+    SmartDashboard.putData("Driver choices", m_chooser);
    //Basic Camera 
     //CameraServer.getInstance().startAutomaticCapture();
 
@@ -192,6 +194,14 @@ public class Robot extends TimedRobot {
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
+      switch (m_autoSelected) {
+         case tankOption:
+           tank = true;
+           break;
+         case arcade:
+           tank = false;
+           break;
+       }
     
   }
 
