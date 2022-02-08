@@ -14,6 +14,7 @@ import java.lang.Math;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Compressor;
 // import edu.wpi.first.wpilibj.buttons.Button;
 // import edu.wpi.first.math.trajectory.TrajectoryUtil;
 // import edu.wpi.first.wpilibj.XboxController;
@@ -54,6 +55,10 @@ import com.revrobotics.CANSparkMax;
 import frc.robot.commands.TankDrive;
 import frc.robot.subsystems.Drivetrain;
 
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.Solenoid;
 /*Basic Camera Imports*/
 //import edu.wpi.first.cameraserver.CameraServer;
 
@@ -92,6 +97,8 @@ public class Robot extends TimedRobot {
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
   private CANSparkMax shooterMotor = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
+  private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+  private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 1);
   // Mechanism (mode id forward backward power)
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
@@ -109,20 +116,42 @@ public class Robot extends TimedRobot {
        // RamseteCommand passes volts to the callback
        m_robotDrive::tankDriveVolts
    );
-  public void runMechanism(CANSparkMax motor, int button, double power, boolean invert){
-    double newPower = power;
-    if (invert){
-      newPower*=-1;
-    }
+   public void runCANMechanism(CANSparkMax motor, int button, double power, boolean invert){
+     double newPower = power;
+     if (invert){
+       newPower*=-1;
+     }
+     if(m_stick.getRawButton(button)){
+         DriverStation.reportWarning("running "+button+" fwd",true);
+         motor.set(newPower);
+     }
+     else{
+       motor.set(0);
+     }
+   } 
+
+   public void runPneumaticCompressor(Compressor comp, int button, boolean enabled){
     if(m_stick.getRawButton(button)){
-        DriverStation.reportWarning("running fwd",true);
-        motor.set(newPower);
+        DriverStation.reportWarning("running compressor",true);
+        comp.enableDigital();
+
     }
     else{
-      motor.set(0);
+      comp.disable();
     }
   } 
+  public void runPneumaticSolenoid(Solenoid solenoid, int button, boolean enabled){
+   if(m_stick.getRawButton(button)){
+        DriverStation.reportWarning("running solenoid",true);
+        solenoid.set(true);
 
+   }
+   else{
+        solenoid.set(false);
+     
+   }
+ } 
+ 
  /* public Spark getSpark(int motor)
   {
     switch(motor)
@@ -155,6 +184,7 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Tank", tankOption);
     m_chooser.addOption("Arcade", arcade);
     SmartDashboard.putData("Driver choices", m_chooser);
+    
    //Basic Camera 
     //CameraServer.getInstance().startAutomaticCapture();
 
@@ -191,6 +221,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+      m_autoSelected = m_chooser.getSelected();
+      System.out.println("Drive: " + m_autoSelected);
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
@@ -218,9 +250,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autoSelected = m_chooser.getSelected();
-    m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
-    System.out.println("Auto selected: " + m_autoSelected);
+    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    
     // try {
     //Trajectory trajectory = TrajectoryUtil.fromPathweaverJson(Paths.get("/home/lvuser/deploy/YourPath.wpilib.json"));
     // }
@@ -261,12 +292,15 @@ public class Robot extends TimedRobot {
     m_tTankDrive.execute();
     }
     // motor, button, power
-    runMechanism(shooterMotor, 4, 1.0, true);
+    runCANMechanism(shooterMotor, 4, 1.0, true);
+    runPneumaticCompressor(pcmCompressor, 5, true);
+    runPneumaticSolenoid(firstSolenoidPCM, 6, true);
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
     final double invertAxis = 1;
-    final double xOffset = 0.0;
+    final double xOffset = 0.15;
+    //positive xOffset goes right
     //gets joystick values and creates curves
     double y = m_stick.getRawAxis(1);
     double yprime = invertAxis * Math.pow(y,3);
