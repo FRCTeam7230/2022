@@ -98,7 +98,7 @@ public class Robot extends TimedRobot {
   private static final String tankOption = "tank mod";
   private CANSparkMax shooterMotor = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-  private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 1);
+  private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
   // Mechanism (mode id forward backward power)
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
@@ -137,6 +137,7 @@ public class Robot extends TimedRobot {
 
     }
     else{
+      DriverStation.reportWarning("compressor off",true);
       comp.disable();
     }
   } 
@@ -147,6 +148,7 @@ public class Robot extends TimedRobot {
 
    }
    else{
+        DriverStation.reportWarning("solenoid off",true);
         solenoid.set(false);
      
    }
@@ -293,8 +295,8 @@ public class Robot extends TimedRobot {
     }
     // motor, button, power
     runCANMechanism(shooterMotor, 4, 1.0, true);
-    runPneumaticCompressor(pcmCompressor, 5, true);
-    runPneumaticSolenoid(firstSolenoidPCM, 6, true);
+    runPneumaticCompressor(pcmCompressor, 2, true);
+    runPneumaticSolenoid(firstSolenoidPCM, 3, true);
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
