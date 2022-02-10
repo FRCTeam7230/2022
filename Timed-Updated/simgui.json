@@ -10,8 +10,7 @@
       "/LiveWindow/Ungrouped/PIDController[2]": "PIDController",
       "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
       "/LiveWindow/Ungrouped/navX-Sensor[4]": "Gyro",
-      "/SmartDashboard/Auto choices": "String Chooser",
-      "/SmartDashboard/Driver choices": "String Chooser"
+      "/SmartDashboard/Auto choices": "String Chooser"
     }
   }
 }
