@@ -56,7 +56,7 @@ public class TankDrive extends CommandBase {
         //The % power used
         final double turnLimit = 0.4;
         double speedLimit=0.7;
-        final double lTankAdj= 0.1;
+        final double lTankAdj= 0.008375;
         double right = m_joystick.getRawAxis(1);
         double left = m_joystick.getRawAxis(3);
         double lprime = -Math.pow(right,3);
