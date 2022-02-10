@@ -194,15 +194,7 @@ public class Robot extends TimedRobot {
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
-      switch (m_autoSelected) {
-         case tankOption:
-           tank = true;
-           break;
-         case arcade:
-           tank = false;
-           break;
-       }
-    
+      
   }
 
   /**
@@ -218,9 +210,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autoSelected = m_chooser.getSelected();
-    m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
-    System.out.println("Auto selected: " + m_autoSelected);
     // try {
     //Trajectory trajectory = TrajectoryUtil.fromPathweaverJson(Paths.get("/home/lvuser/deploy/YourPath.wpilib.json"));
     // }
@@ -254,9 +243,25 @@ public class Robot extends TimedRobot {
   /**
    * This function is called periodically during operator control.
    */
-  
+  @Override 
+  public void teleopInit(){
+
+    
+    m_autoSelected = m_chooser.getSelected();
+    m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    System.out.println("Auto selected: " + m_autoSelected);
+
+  }
   @Override
-  public void teleopPeriodic() {
+  public void teleopPeriodic() {switch (m_autoSelected) {
+    case tankOption:
+      tank = true;
+      break;
+    case arcade:
+      tank = false;
+      break;
+  }
+
     if (tank){
     m_tTankDrive.execute();
     }
