@@ -20,17 +20,23 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import frc.robot.Constants.DriveConstants;
-import com.kauailabs.navx.frc.AHRS;;
+import com.kauailabs.navx.frc.AHRS;
+import com.revrobotics.CANSparkMax; 
 
 //import frc.robot.Robot;
 //import frc.robot.Robot;
 public class DriveSubsystem extends SubsystemBase {
  
   //test
-  public Spark l_motor1=  new Spark(0);
-  public Spark r_motor1 = new Spark(2);
-  public Spark l_motor2 = new Spark(1);
-  public Spark r_motor2 = new Spark(3);
+  // public Spark l_motor1 = new Spark(0);
+  // public Spark r_motor1 = new Spark(2);
+  // public Spark l_motor2 = new Spark(1);
+  // public Spark r_motor2 = new Spark(3);
+  public CANSparkMax l_motor1 = new CANSparkMax(0, CANSparkMax.MotorType.kBrushless);
+  public CANSparkMax r_motor1 = new CANSparkMax(2, CANSparkMax.MotorType.kBrushless);
+  public CANSparkMax l_motor2 = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
+  public CANSparkMax r_motor2 = new CANSparkMax(3, CANSparkMax.MotorType.kBrushless);
+  
   // The motors on the left side of the drive.
   // private final SpeedControllerGroup m_leftMotors =
   // new SpeedControllerGroup(l_motor1,
