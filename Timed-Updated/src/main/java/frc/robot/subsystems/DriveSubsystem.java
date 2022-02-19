@@ -31,10 +31,10 @@ public class DriveSubsystem extends SubsystemBase {
   // public Spark r_motor1 = new Spark(2);
   // public Spark l_motor2 = new Spark(1);
   // public Spark r_motor2 = new Spark(3);
-  public CANSparkMax l_motor1 = new CANSparkMax(0, CANSparkMax.MotorType.kBrushless);
-  public CANSparkMax r_motor1 = new CANSparkMax(2, CANSparkMax.MotorType.kBrushless);
-  public CANSparkMax l_motor2 = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
-  public CANSparkMax r_motor2 = new CANSparkMax(3, CANSparkMax.MotorType.kBrushless);
+  public CANSparkMax l_motor1 = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
+  public CANSparkMax r_motor1 = new CANSparkMax(3, CANSparkMax.MotorType.kBrushless);
+  public CANSparkMax l_motor2 = new CANSparkMax(2, CANSparkMax.MotorType.kBrushless);
+  public CANSparkMax r_motor2 = new CANSparkMax(4, CANSparkMax.MotorType.kBrushless);
   // The motors on the left side of the drive.
   // private final SpeedControllerGroup m_leftMotors =
   // new SpeedControllerGroup(l_motor1,
@@ -56,12 +56,12 @@ public class DriveSubsystem extends SubsystemBase {
 
   // The left-side drive encoder
   private final Encoder m_leftEncoder =
-      new Encoder(2, 3,
+      new Encoder(3, 4,
                   DriveConstants.kLeftEncoderReversed);
 
   // The right-side drive encoder
   private final Encoder m_rightEncoder =
-      new Encoder(0, 1,
+      new Encoder(1, 2,
                   DriveConstants.kRightEncoderReversed);
 
   // The gyro sensoroo

@@ -85,6 +85,8 @@ public class Robot extends TimedRobot {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
+  private String speedStr = "0.7";
+  private double shootingPower = 0.7;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private Joystick m_stick = new Joystick(0);
   // Pathweaver related
@@ -97,10 +99,10 @@ public class Robot extends TimedRobot {
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
   // TODO: Change the ID of shooterMotor, or use different motor controllers
-  private CANSparkMax shooterMotor = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
+  private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
-  // Mechanism (mode id forward backward power)
+  // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
    RamseteIterative ramsete = new RamseteIterative(
@@ -123,7 +125,7 @@ public class Robot extends TimedRobot {
        newPower*=-1;
      }
      if(m_stick.getRawButton(button)){
-         DriverStation.reportWarning("running "+button+" fwd",true);
+         DriverStation.reportWarning("running button "+button+"fwd",true);
          motor.set(newPower);
      }
      else{
@@ -188,6 +190,8 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("Arcade", arcade);
     SmartDashboard.putData("Driver choices", m_chooser);
     
+    // speedStr = SmartDashboard.getString("Shooter Speed","0.7");
+    SmartDashboard.putString("Shooter Speed", speedStr);
    //Basic Camera 
     //CameraServer.getInstance().startAutomaticCapture();
 
@@ -225,7 +229,10 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
       m_autoSelected = m_chooser.getSelected();
+      speedStr = SmartDashboard.getString("Shooter Speed","0.7");
+
       System.out.println("Drive: " + m_autoSelected);
+      System.out.println("Shooter Speed: " + speedStr);
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
@@ -253,7 +260,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     
     // try {
     //Trajectory trajectory = TrajectoryUtil.fromPathweaverJson(Paths.get("/home/lvuser/deploy/YourPath.wpilib.json"));
@@ -294,15 +300,16 @@ public class Robot extends TimedRobot {
     if (tank){
     m_tTankDrive.execute();
     }
+    shootingPower = Double.parseDouble(speedStr);
     // motor, button, power
-    runCANMechanism(shooterMotor, 4, 1.0, true);
+    runCANMechanism(shooterMotor, 4, shootingPower, true);
     runPneumaticCompressor(pcmCompressor, 2, true);
     runPneumaticSolenoid(firstSolenoidPCM, 3, true);
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
     final double invertAxis = 1;
-    final double xOffset = 0.15;
+    final double xOffset = 0.0;
     //positive xOffset goes right
     //gets joystick values and creates curves
     double y = m_stick.getRawAxis(1);
@@ -316,7 +323,7 @@ public class Robot extends TimedRobot {
     //The % power used
     final double turnLimit = 0.4;
     double speedLimit=0.5;
-    final double leftAdj = 1.3;
+    final double leftAdj = 0;
     //Reports joystick numbers
     DriverStation.reportWarning("Raw Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
     //Mathmomagic! For X and Y 
