@@ -59,6 +59,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.DigitalInput;
 /*Basic Camera Imports*/
 //import edu.wpi.first.cameraserver.CameraServer;
 
@@ -98,6 +99,11 @@ public class Robot extends TimedRobot {
   private boolean tank = false;
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
+
+  //private DigitalInput initialConveyerSensor;
+  //private DigitalInput finalConveyerSensor; 
+  private DigitalInput IRSensor;
+
   // TODO: Change the ID of shooterMotor, or use different motor controllers
   private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
@@ -195,6 +201,10 @@ public class Robot extends TimedRobot {
    //Basic Camera 
     //CameraServer.getInstance().startAutomaticCapture();
 
+    //initialConveyorSensor = new DigitalInput(4);
+    //finalConveyerSensor = new DigitalInput(5);
+    IRSensor = new DigitalInput(7);
+
     //Advanced Camera
     new Thread(() -> {
       UsbCamera camera = CameraServer.startAutomaticCapture();
@@ -212,6 +222,7 @@ public class Robot extends TimedRobot {
         }
         Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
         outputStream.putFrame(output);
+        
       }
     }).start();
   }
@@ -236,6 +247,7 @@ public class Robot extends TimedRobot {
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
+      SmartDashboard.putData("IR Readings", IRSensor);
       switch (m_autoSelected) {
          case tankOption:
            tank = true;
