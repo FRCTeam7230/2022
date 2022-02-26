@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -46,8 +47,12 @@ public class Limelight {
 	 * @return tx as reported by the Limelight.
 	 */
 	public static double getTx() {
+	//	System.out.print();
 		return getValue("tx").getDouble(0.00);
+
+	
 	}
+
 
 	/**
 	 * Vertical offset from crosshair to target (-20.5 degrees to 20.5 degrees).
