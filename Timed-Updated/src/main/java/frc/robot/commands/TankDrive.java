@@ -55,7 +55,7 @@ public class TankDrive extends CommandBase {
         double slowFactor = 0.85;
         //The % power used
         final double turnLimit = 0.4;
-        double speedLimit=0.7;
+        double speedLimit=0.5;
         final double lTankAdj= 0.1;
         double right = m_joystick.getRawAxis(1);
         double left = m_joystick.getRawAxis(3);
@@ -86,6 +86,7 @@ public class TankDrive extends CommandBase {
             if(m_joystick.getRawButton(5)){
                 lprime*=accelFactor;
                 rprime*=accelFactor; 
+                System.out.println("kiwi");
             }
             
             if(m_joystick.getRawButton(6)){

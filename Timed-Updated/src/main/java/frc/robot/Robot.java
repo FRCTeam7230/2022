@@ -102,9 +102,14 @@ public class Robot extends TimedRobot {
 
   //private DigitalInput initialConveyerSensor;
   //private DigitalInput finalConveyerSensor; 
-  private DigitalInput IRSensor;
-
-  // TODO: Change the ID of shooterMotor, or use different motor controllers
+  private DigitalInput IRSensor1;
+  private DigitalInput IRSensor2;
+  /*
+  * CAN IDS:
+  1 - 4: driving motors
+  5: conveyor
+  6: shooter
+  */
   private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
@@ -203,7 +208,8 @@ public class Robot extends TimedRobot {
 
     //initialConveyorSensor = new DigitalInput(4);
     //finalConveyerSensor = new DigitalInput(5);
-    IRSensor = new DigitalInput(7);
+    IRSensor1 = new DigitalInput(7);
+    IRSensor2 = new DigitalInput(8);
 
     //Advanced Camera
     new Thread(() -> {
@@ -247,7 +253,8 @@ public class Robot extends TimedRobot {
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
-      SmartDashboard.putData("IR Readings", IRSensor);
+      SmartDashboard.putBoolean("IR 1 Readings", IRSensor1.get());
+      SmartDashboard.putBoolean("IR 2 Readings", IRSensor2.get());
       switch (m_autoSelected) {
          case tankOption:
            tank = true;
