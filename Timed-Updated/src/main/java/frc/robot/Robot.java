@@ -111,10 +111,10 @@ public class Robot extends TimedRobot {
   6: shooter
   */
   // TODO: Change the ID of shooterMotor, or use different motor controllers
-  private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
-  private CANSparkMax conveyorMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
-  private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-  private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
+  // private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
+  // private CANSparkMax conveyorMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
+  // private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+  // private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
   // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
@@ -250,8 +250,8 @@ public class Robot extends TimedRobot {
       m_autoSelected = m_chooser.getSelected();
       speedStr = SmartDashboard.getString("Shooter Speed","0.7");
 
-      System.out.println("Drive: " + m_autoSelected);
-      System.out.println("Shooter Speed: " + speedStr);
+      // System.out.println("Drive: " + m_autoSelected);
+      // System.out.println("Shooter Speed: " + speedStr);
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
@@ -268,7 +268,7 @@ public class Robot extends TimedRobot {
        
        if (IRSensor1.get()==true || IRSensor2.get()==true)
        {
-         runCANMechanism(conveyorMotor, 4, shootingPower, true);
+        //  runCANMechanism(conveyorMotor, 4, shootingPower, true);
        }
 
     
@@ -329,9 +329,9 @@ public class Robot extends TimedRobot {
     }
     shootingPower = Double.parseDouble(speedStr);
     // motor, button, power
-    runCANMechanism(shooterMotor, 4, shootingPower, true);
-    runPneumaticCompressor(pcmCompressor, 2, true);
-    runPneumaticSolenoid(firstSolenoidPCM, 3, true);
+    // runCANMechanism(shooterMotor, 4, shootingPower, true);
+    // runPneumaticCompressor(pcmCompressor, 2, true);
+    // runPneumaticSolenoid(firstSolenoidPCM, 3, true);
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
