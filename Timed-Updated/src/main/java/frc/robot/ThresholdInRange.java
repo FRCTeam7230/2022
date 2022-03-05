@@ -1,3 +1,5 @@
+
+package frc.robot;
 import org.opencv.core.*;
 
 import org.opencv.core.Point;
@@ -53,25 +55,16 @@ public class ThresholdInRange {
     //screen size: x= 634, y =  480
     
   //measurement:
-    private static int focalLength = 968/3; //focal length in pixels
-    private static int ballRadius = 9; //cm
-    private static int ballDistance;
+    private static double focalLength = 2*320.8; //focal length in pixels
+//    private static double ballRadius = 4.5; //cm
+    private static double ballRadius = 12.5;
+    private static double distanceCameraToBall = 0;
+    
+    private static double depth = ballRadius;
+    private static double cameraAngle = 90.0;//change this to another angle from flour
+    private static double ballDistance;
     
     private static final String WINDOW_NAME = "Thresholding Operations using inRange demo";
-    
-//    private static final String LOW_H_NAME = "Low H";
-//    private static final String LOW_S_NAME = "Low S";
-//    private static final String LOW_V_NAME = "Low V";
-//    private static final String HIGH_H_NAME = "High H";
-//    private static final String HIGH_S_NAME = "High S";
-//    private static final String HIGH_V_NAME = "High V";
-//    
-//    private JSlider sliderLowH;
-//    private JSlider sliderHighH;
-//    private JSlider sliderLowS;
-//    private JSlider sliderHighS;
-//    private JSlider sliderLowV;
-//    private JSlider sliderHighV;
     
     private VideoCapture cap;
     private Mat matFrame = new Mat();
@@ -80,13 +73,12 @@ public class ThresholdInRange {
     private JLabel imgDetectionLabel;
     private CaptureTask captureTask;
     
-    
-    public ThresholdInRange(String[] args) {
+    public ThresholdInRange() {
         int cameraDevice = 0;
         
-        if (args.length > 0) {
-            cameraDevice = Integer.parseInt(args[0]);
-        }
+        // if (args.length > 0) {
+        //     cameraDevice = Integer.parseInt(args[0]);
+        // }
         cap = new VideoCapture(cameraDevice);
         if (!cap.isOpened()) {
             System.err.println("Cannot open camera: " + cameraDevice);
@@ -140,92 +132,109 @@ public class ThresholdInRange {
             Mat thresh = new Mat();
             
             //red color:
-//            Core.inRange(frameHSV, new Scalar(0, 120, 70),
-//                    new Scalar(10, 255, 255), thresh);
+//            Core.inRange(frameHSV, new Scalar(0, 130, 130),
+//                    new Scalar(180, 240, 255), thresh);
+            
             //blue color:
-//            Core.inRange(frameHSV, new Scalar(90, 40, 50),
-//                    new Scalar(120, 170, 255), thresh);
-            
-            //just for test:
-            Core.inRange(frameHSV, new Scalar(0, 30, 150),
-                  new Scalar(20, 200, 255), thresh);
-            
+            Core.inRange(frameHSV, new Scalar(95, 100, 90),
+                    new Scalar(110, 255, 255), thresh);
+
             Core.split(thresh, frames);
             Mat gray = frames.get(0);
 
          //Default:
-//            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue(), sliderLowV.getValue()),
+//            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
 //                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
 
-              Timer timer = new Timer();
-              timer.schedule(new TimerTask() {
-                  public void run() {
-                	  Imgcodecs.imwrite("HSVpicture.jpg", thresh);
-                	  Imgcodecs.imwrite("NormalPicture.jpg", frame);
-                  }
-              }, 10000); 
+//              Timer timer = new Timer();
+//              timer.schedule(new TimerTask() {
+//                  public void run() {
+//                	  Imgcodecs.imwrite("HSVpicture.jpg", thresh);
+//                	  Imgcodecs.imwrite("NormalPicture.jpg", frame);
+//                  }
+//              }, 10000); 
 
-    		  if (varForTimer  == 0) {
+              Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
+              
+              
+              if (varForTimer  == 0) {
             	  varForTimer = 1;
-                  Imgproc.medianBlur(gray, gray, 5);
-                  Mat circles = new Mat();    	        	  
-                  
-                  Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
-                          2*(double)gray.rows(), // change this value to detect circles with different distances to each other
-                          50.0, 30.0, 0, 0); // change the last two parameters
-                          // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
-                  for (int x = 0; x < circles.cols(); x++) {
-                      double[] c = circles.get(0, x);
-                      Point center = new Point(Math.round(c[0]), Math.round(c[1]));
-
-                      String coordinateXY = Math.round(c[0]/20 - 1)*20 + "," + Math.round(c[1]/20 - 1)*20;
-                      
-                      int cX = (int) Math.round(c[0]/5 - 1)*5; //var for help
-                      int cY = (int) Math.round(c[1]/5 - 1)*5;
-                      
-//                      String coordinateXY = Math.round(c[0]) + "," + Math.round(c[1]);
-                      
-                      // circle center
-                      Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
-                      // circle outline
-                      int radius = (int) Math.round(c[2]);
-                      Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
-                      
-                      //original version of displaying coordinates:
+            	  Imgproc.medianBlur(gray, gray, 5);
+		          Mat circles = new Mat();    	        	  
+		                  
+		          Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
+		        		  			2*(double)gray.rows(), // change this value to detect circles with different distances to each other
+		        		  			50.0, 30.0, 0, 0); // change the last two parameters
+		                          // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
+		          for (int x = 0; x < circles.cols(); x++) {
+		        	  double[] c = circles.get(0, x);
+		              Point center = new Point(Math.round(c[0]), Math.round(c[1]));
+		                      
+		              int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
+		              int cY = (int) Math.round(c[1]/5 - 1)*5;
+		                      
+		              String coordinateXY = cX + "," + cY;
+		                     
+		                      // circle center
+		              Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
+		                      // circle outline
+		              int radius = (int) Math.round(c[2]);
+		              Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
+		                      
+		              //original version of displaying coordinates:
 //                      Imgproc.putText(frame, coordinateXY, new Point(Math.round(c[0] - 100), Math.round(c[1] - 100)), Imgproc.FONT_HERSHEY_PLAIN, 3, new Scalar(0, 255, 111), 3);	
-                      //another version of displaying coordinates:
-                      Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
+		                      
+		               //another version of displaying coordinates:
+		                      Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
                     
 //                      Imgproc.putText(frame, text, coordinates, fontType, fontSize, color, thickness)
-                      ballDistance = focalLength*ballRadius/radius;
-                      String Dsize = ballDistance + "cm";
-
-                      float ballAngleX = (float) Math.toDegrees(Math.atan(Math.abs(screenCenterX-cX)*100/ballDistance/100));
-                      float ballAngleY = (float) Math.toDegrees(Math.atan(Math.abs(screenCenterY-cY)*100/ballDistance/100));
+		              
+		                      
+		                    //distance from camera to ball
+                      distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
                       
+                      		//distance from robot to ball
+                      ballDistance = (double) distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle));
+                      
+                      String Dsize = "Distance: " + ballDistance + "cm";
+                      int kat1 = screenCenterX-cX;
+                      int kat2 = Math.abs(screenCenterY-cY);                      
+                    
+//                      double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan((float) kat1/focalLength))*10)/10;
+                      double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*distanceCameraToBall))));
+//                      double ballAngleX = (double) Math.toDegrees(Math.atan(distanceCameraToBall/kat1*));
+                      double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan((double) kat2/focalLength))*10)/10;
+                      
+
+                      
+//                      String string = ballDistance + " ";
+//                      Imgproc.putText(frame, string, new Point(20, 300), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 100, 0), 4);
+                      
+//						new Point(x, y) 
+                      //showing angles and distance on the screen
                       String stringBallAngleX = ballAngleX + " X";
-                      String stringBallAngleY =  ballAngleY + " Y ";
-                      
-//						new Point(x, y)
+                      String stringBallAngleY =  ballAngleY + " Y "; 
                       Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
-                      Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-                      Imgproc.putText(frame, stringBallAngleX, new Point(50, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-                      Imgproc.putText(frame, stringBallAngleY, new Point(50, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-  
+                      Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
+                      Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
                   }
-
-                  update(frame, thresh);
+                
+	              update(frame, thresh);
+		                  
                   Timer timer1 = new Timer();
                   timer1.schedule(new TimerTask() {
                       public void run() {
                       	varForTimer = 0;
                       }
-                  }, 100);
-    		  }  
+                  }, 50);   
+              }
         }
     }
    
+    public double getDistance(){
+        return ballDistance;
 
+    }
     private void addComponentsToPane(Container pane, Image img) {
         if (!(pane.getLayout() instanceof BorderLayout)) {
             pane.add(new JLabel("Container doesn't use BorderLayout!"));
@@ -246,17 +255,5 @@ public class ThresholdInRange {
         frame.repaint();
     }
         
-    public static void main(String[] args) {
-        // Load the native OpenCV library
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-        // Schedule a job for the event dispatch thread:
-        // creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new ThresholdInRange(args);
-            }
-        });
-    }
 }
  
