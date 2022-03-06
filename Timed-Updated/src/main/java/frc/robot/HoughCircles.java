@@ -10,8 +10,5 @@ public class HoughCircles {
     public static void run(String[] args) {
       // Load the native library.
     	System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-    	System.out.printf("Hello!!!");
-//    	new HoughCirclesRun().run(args);
-
     }
 }
