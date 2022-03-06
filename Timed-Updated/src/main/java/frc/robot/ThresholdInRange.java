@@ -56,7 +56,6 @@ public class ThresholdInRange {
     
   //measurement:
     private static double focalLength = 2*320.8; //focal length in pixels
-//    private static double ballRadius = 4.5; //cm
     private static double ballRadius = 12.5;
     private static double distanceCameraToBall = 0;
     
@@ -79,6 +78,7 @@ public class ThresholdInRange {
         // if (args.length > 0) {
         //     cameraDevice = Integer.parseInt(args[0]);
         // }
+
         cap = new VideoCapture(cameraDevice);
         if (!cap.isOpened()) {
             System.err.println("Cannot open camera: " + cameraDevice);
@@ -136,7 +136,7 @@ public class ThresholdInRange {
 //                    new Scalar(180, 240, 255), thresh);
             
             //blue color:
-            Core.inRange(frameHSV, new Scalar(95, 100, 90),
+            Core.inRange(frameHSV, new Scalar(95, 50, 50),
                     new Scalar(110, 255, 255), thresh);
 
             Core.split(thresh, frames);
@@ -146,16 +146,7 @@ public class ThresholdInRange {
 //            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
 //                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
 
-//              Timer timer = new Timer();
-//              timer.schedule(new TimerTask() {
-//                  public void run() {
-//                	  Imgcodecs.imwrite("HSVpicture.jpg", thresh);
-//                	  Imgcodecs.imwrite("NormalPicture.jpg", frame);
-//                  }
-//              }, 10000); 
-
               Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
-              
               
               if (varForTimer  == 0) {
             	  varForTimer = 1;
@@ -181,11 +172,7 @@ public class ThresholdInRange {
 		              int radius = (int) Math.round(c[2]);
 		              Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
 		                      
-		              //original version of displaying coordinates:
-//                      Imgproc.putText(frame, coordinateXY, new Point(Math.round(c[0] - 100), Math.round(c[1] - 100)), Imgproc.FONT_HERSHEY_PLAIN, 3, new Scalar(0, 255, 111), 3);	
-		                      
-		               //another version of displaying coordinates:
-		                      Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
+		              Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
                     
 //                      Imgproc.putText(frame, text, coordinates, fontType, fontSize, color, thickness)
 		              
@@ -198,18 +185,12 @@ public class ThresholdInRange {
                       
                       String Dsize = "Distance: " + ballDistance + "cm";
                       int kat1 = screenCenterX-cX;
-                      int kat2 = Math.abs(screenCenterY-cY);                      
+                      int kat2 = screenCenterY-cY;                      
                     
-//                      double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan((float) kat1/focalLength))*10)/10;
                       double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*distanceCameraToBall))));
 //                      double ballAngleX = (double) Math.toDegrees(Math.atan(distanceCameraToBall/kat1*));
-                      double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan((double) kat2/focalLength))*10)/10;
-                      
+                      double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*distanceCameraToBall))));
 
-                      
-//                      String string = ballDistance + " ";
-//                      Imgproc.putText(frame, string, new Point(20, 300), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 100, 0), 4);
-                      
 //						new Point(x, y) 
                       //showing angles and distance on the screen
                       String stringBallAngleX = ballAngleX + " X";
