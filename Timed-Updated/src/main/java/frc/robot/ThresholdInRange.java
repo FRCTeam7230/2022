@@ -60,6 +60,7 @@ public class ThresholdInRange {
     private static double distanceCameraToBall = 0;
     
     private static double depth = ballRadius;
+    private static int robotDepth = 0;
     private static double cameraAngle = 90.0;//change this to another angle from flour
     private static double ballDistance;
     
@@ -132,12 +133,12 @@ public class ThresholdInRange {
             Mat thresh = new Mat();
             
             //red color:
-//            Core.inRange(frameHSV, new Scalar(0, 130, 130),
-//                    new Scalar(180, 240, 255), thresh);
+           Core.inRange(frameHSV, new Scalar(0, 130, 130),
+                   new Scalar(180, 240, 255), thresh);
             
             //blue color:
-            Core.inRange(frameHSV, new Scalar(95, 50, 50),
-                    new Scalar(110, 255, 255), thresh);
+            // Core.inRange(frameHSV, new Scalar(95, 50, 50),
+                    // new Scalar(110, 255, 255), thresh);
 
             Core.split(thresh, frames);
             Mat gray = frames.get(0);
@@ -146,7 +147,7 @@ public class ThresholdInRange {
 //            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
 //                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
 
-              Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
+              Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
               
               if (varForTimer  == 0) {
             	  varForTimer = 1;
@@ -173,23 +174,20 @@ public class ThresholdInRange {
 		              Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
 		                      
 		              Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
-                    
 //                      Imgproc.putText(frame, text, coordinates, fontType, fontSize, color, thickness)
-		              
 		                      
 		                    //distance from camera to ball
                       distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
                       
                       		//distance from robot to ball
-                      ballDistance = (double) distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle));
+                      ballDistance = (double) distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))+robotDepth;
                       
                       String Dsize = "Distance: " + ballDistance + "cm";
                       int kat1 = screenCenterX-cX;
                       int kat2 = screenCenterY-cY;                      
                     
-                      double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*distanceCameraToBall))));
-//                      double ballAngleX = (double) Math.toDegrees(Math.atan(distanceCameraToBall/kat1*));
-                      double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*distanceCameraToBall))));
+                      double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance))));
+                      double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance))));
 
 //						new Point(x, y) 
                       //showing angles and distance on the screen
