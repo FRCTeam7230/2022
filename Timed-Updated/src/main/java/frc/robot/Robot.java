@@ -99,7 +99,7 @@ public class Robot extends TimedRobot {
   private DriveSubsystem m_robotDrive = new DriveSubsystem();
   // Speed/turn adjustments in the TankDrive.java file
   private TankDrive m_tTankDrive = new TankDrive(m_robotDrive);
-  private FindPath fp = new FindPath();
+  private FindPath pathOne = new FindPath("/home/lvuser/deploy/output/Nab a Ball then go to goal but for another.wpilib.json");
   private boolean tank = false;
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
@@ -129,7 +129,7 @@ public class Robot extends TimedRobot {
   static {System.loadLibrary(Core.NATIVE_LIBRARY_NAME);}
 
    RamseteIterative ramsete = new RamseteIterative(
-       fp.getPath(),
+       pathOne.getPath(),
        m_robotDrive::getPose,
        new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
        new SimpleMotorFeedforward(DriveConstants.ksVolts,
