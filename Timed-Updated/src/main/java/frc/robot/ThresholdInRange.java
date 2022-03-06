@@ -58,6 +58,7 @@ public class ThresholdInRange {
     private static double focalLength = 2*320.8; //focal length in pixels
     private static double ballRadius = 12.5;
     private static double distanceCameraToBall = 0;
+    private static int robotDepth = 0;
     
     private static double depth = ballRadius;
     private static double cameraAngle = 90.0;//change this to another angle from flour
@@ -181,15 +182,15 @@ public class ThresholdInRange {
                       distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
                       
                       		//distance from robot to ball
-                      ballDistance = (double) distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle));
+                      ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2 - robotDepth;
                       
                       String Dsize = "Distance: " + ballDistance + "cm";
                       int kat1 = screenCenterX-cX;
                       int kat2 = screenCenterY-cY;                      
                     
-                      double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*distanceCameraToBall))));
+                      double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*distanceCameraToBall)))/2)*2;
 //                      double ballAngleX = (double) Math.toDegrees(Math.atan(distanceCameraToBall/kat1*));
-                      double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*distanceCameraToBall))));
+                      double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*distanceCameraToBall)))/2)*2;
 
 //						new Point(x, y) 
                       //showing angles and distance on the screen
