@@ -50,6 +50,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // import edu.wpi.first.wpilibj.motorcontrol.Spark;
 //import frc.robot.RobotContainer;
 // import frc.robot.subsystems.DriveSubsystem;
+import com.ctre.phoenix.motorcontrol.*;
+import com.ctre.phoenix.motorcontrol.can.*;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+
 import frc.robot.Mechanism;
 import com.revrobotics.CANSparkMax;
 import frc.robot.commands.TankDrive;
@@ -65,6 +69,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 
 /*Advanced Camera Imports*/
 import org.opencv.core.Mat;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import edu.wpi.first.cscore.CvSink;
@@ -113,11 +118,16 @@ public class Robot extends TimedRobot {
   // TODO: Change the ID of shooterMotor, or use different motor controllers
   // private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
   // private CANSparkMax conveyorMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
+  // private VictorSPX intakeMotor = new VictorSPX(7);
   // private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   // private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
+  
+  
   // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
+  static {System.loadLibrary(Core.NATIVE_LIBRARY_NAME);}
+
    RamseteIterative ramsete = new RamseteIterative(
        fp.getPath(),
        m_robotDrive::getPose,
@@ -169,7 +179,7 @@ public class Robot extends TimedRobot {
      
    }
  } 
- 
+// intakeMotor.set(ControlMode.PercentOutput, 0.4)
  /* public Spark getSpark(int motor)
   {
     switch(motor)
@@ -209,7 +219,7 @@ public class Robot extends TimedRobot {
     //CameraServer.getInstance().startAutomaticCapture();
 
     //initialConveyorSensor = new DigitalInput(4);
-    //finalConveyerSensor = new DigitalInput(5);
+    //finalConveyerSensor = new DigitalInput(5);  
     IRSensor1 = new DigitalInput(7);
     IRSensor2 = new DigitalInput(8);
 
