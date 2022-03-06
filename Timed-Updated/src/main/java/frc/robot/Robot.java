@@ -112,15 +112,15 @@ public class Robot extends TimedRobot {
   /*
   * CAN IDS:
   1 - 4: driving motors
-  5: conveyor
-  6: shooter
+  5: shooter
+  6: conveyor
   */
   // TODO: Change the ID of shooterMotor, or use different motor controllers
-  // private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
-  // private CANSparkMax conveyorMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
-  // private VictorSPX intakeMotor = new VictorSPX(7);
+  // private CANSparkMax shooterMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
+  private CANSparkMax conveyorMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
+  private VictorSPX intakeMotor = new VictorSPX(7);
   // private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-  // private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
+  private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
   
   
   // Mechanism (mode id forward backward power)   
@@ -128,7 +128,7 @@ public class Robot extends TimedRobot {
   //  Pathweaver
   static {System.loadLibrary(Core.NATIVE_LIBRARY_NAME);}
 
-   RamseteIterative ramsete = new RamseteIterative(
+   RamseteIterative ramsete1 = new RamseteIterative(
        pathOne.getPath(),
        m_robotDrive::getPose,
        new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
@@ -156,6 +156,20 @@ public class Robot extends TimedRobot {
      }
    } 
 
+   public void runSPXMechanism(VictorSPX motor, int button, double power, boolean invert){
+    double newPower = power;
+    if (invert){
+      newPower*=-1;
+    }
+    if(m_stick.getRawButton(button)){
+        DriverStation.reportWarning("running spxbutton "+button+"fwd",true);
+        motor.set(ControlMode.PercentOutput,newPower);
+    }
+    else{
+      motor.set(ControlMode.PercentOutput,0);
+    }
+  } 
+
    public void runPneumaticCompressor(Compressor comp, int button, boolean enabled){
     if(m_stick.getRawButton(button)){
         DriverStation.reportWarning("running compressor",true);
@@ -179,6 +193,12 @@ public class Robot extends TimedRobot {
      
    }
  } 
+
+ public void runIntake(int button){
+   runCANMechanism(conveyorMotor, button, 0.5, false);
+   runPneumaticSolenoid(intakeSolenoid, button, true);
+   runSPXMechanism(intakeMotor, button, 0.5, false);
+ }
 // intakeMotor.set(ControlMode.PercentOutput, 0.4)
  /* public Spark getSpark(int motor)
   {
@@ -304,7 +324,7 @@ public class Robot extends TimedRobot {
     // }
     // catch (IOException e)
     // {}
-    ramsete.initialize();
+    ramsete1.initialize();
   }
 
   /**
@@ -312,7 +332,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-    ramsete.execute();
+    ramsete1.execute();
    /* switch (m_autoSelected) {
       case kCustomAuto:
         // Put custom auto code here
@@ -342,7 +362,7 @@ public class Robot extends TimedRobot {
     // motor, button, power
     // runCANMechanism(shooterMotor, 4, shootingPower, true);
     // runPneumaticCompressor(pcmCompressor, 2, true);
-    // runPneumaticSolenoid(firstSolenoidPCM, 3, true);
+    // runPneumaticSolenoid(intakeSolenoid, 3, true);
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
