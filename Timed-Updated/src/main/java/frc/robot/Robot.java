@@ -14,6 +14,7 @@ import java.lang.Math;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Compressor;
 // import edu.wpi.first.wpilibj.buttons.Button;
 // import edu.wpi.first.math.trajectory.TrajectoryUtil;
 // import edu.wpi.first.wpilibj.XboxController;
@@ -27,6 +28,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.commands.TankDrive;
 // import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 
@@ -48,8 +50,16 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // import edu.wpi.first.wpilibj.motorcontrol.Spark;
 //import frc.robot.RobotContainer;
 // import frc.robot.subsystems.DriveSubsystem;
-// import frc.robot.Mechanism;
+import frc.robot.Mechanism;
+import com.revrobotics.CANSparkMax;
+import frc.robot.commands.TankDrive;
+import frc.robot.subsystems.Drivetrain;
 
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.DigitalInput;
 /*Basic Camera Imports*/
 //import edu.wpi.first.cameraserver.CameraServer;
 
@@ -61,7 +71,6 @@ import edu.wpi.first.cscore.CvSink;
 import edu.wpi.first.cscore.CvSource;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
-
 // import java.io.IOException;
 // import java.nio.file.Paths;
 /**
@@ -71,41 +80,43 @@ import edu.wpi.first.cameraserver.CameraServer;
  * creating this project, you must also update the build.gradle file in the
  * project.
  */
+
 public class Robot extends TimedRobot {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
+  private String speedStr = "0.7";
+  private double shootingPower = 0.7;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private Joystick m_stick = new Joystick(0);
   // Pathweaver related
+  // private Drivetrain m_Drivetrain = new Drivetrain();
   private DriveSubsystem m_robotDrive = new DriveSubsystem();
+  // Speed/turn adjustments in the TankDrive.java file
+  private TankDrive m_tTankDrive = new TankDrive(m_robotDrive);
   private FindPath fp = new FindPath();
-//  private Button buttonA = new Button();
+  private boolean tank = false;
+  private static final String arcade = "arcad";
+  private static final String tankOption = "tank mod";
 
-  // private Mechanism intake = new Mechanism("button",0,5,6,1,2,50);
-  // private Mechanism conveyer = new Mechanism("button",0,7,8,3,4,50);
-  // private Mechanism shooter = new Mechanism("button",0,9,10,5,6,50);
-  // private Mechanism climb = new Mechanism("button", 0,11,12,7,8,50);
+  private ThresholdInRange vision = new ThresholdInRange();
+  //private DigitalInput initialConveyerSensor;
+  //private DigitalInput finalConveyerSensor; 
+  private DigitalInput IRSensor1;
+  private DigitalInput IRSensor2;
   /*
-  BUTTONS:
-  A - 1
-  B - 2
-  X - 3
-  Y - 4
-  L Shoulder Buttons - 5
-  R Shoulder Button - 6
-  Middle Button (L) - 7
-  Middle Button ® - 8
+  * CAN IDS:
+  1 - 4: driving motors
+  5: conveyor
+  6: shooter
   */
-
-
-  
-
-    // Create config for trajectory
-    
-   // String trajectoryJSON = "C:\\Users\\Johnathan\\FRC\\Timed-Imported\\src\\main\\deploy\\paths\\loopdeloop.wpilib.json";
-            
-   
+  // TODO: Change the ID of shooterMotor, or use different motor controllers
+  // private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
+  // private CANSparkMax conveyorMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
+  // private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+  // private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
+  // Mechanism (mode id forward backward power)   
+  // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
    RamseteIterative ramsete = new RamseteIterative(
        fp.getPath(),
@@ -121,21 +132,44 @@ public class Robot extends TimedRobot {
        // RamseteCommand passes volts to the callback
        m_robotDrive::tankDriveVolts
    );
-          
-    // An example trajectory to follow.  All units in meters.
-   
-    
-  // private Mechanism Intake = new Mechanism("button",0,5,6,1,2,50);
-  //private final Timer m_timer = new Timer();
-  //CANSparkMax l_motor1 = new CANSparkMax(1, MotorType.kBrushless);
-  //CANSparkMax r_motor1 = new CANSparkMax(2, MotorType.kBrushless);
-  //CANSparkMax l_motor2 = new CANSparkMax(3, MotorType.kBrushless);
-  //CANSparkMax r_motor2 = new CANSparkMax(4, MotorType.kBrushless);
-  //CANSparkMax l_flywheel = new CANSparkMax(5, MotorType.kBrushless);
-  //CANSparkMax r_flywheel = new CANSparkMax(6, MotorType.kBrushless);
-   //test
-  
+   public void runCANMechanism(CANSparkMax motor, int button, double power, boolean invert){
+     double newPower = power;
+     if (invert){
+       newPower*=-1;
+     }
+     if(m_stick.getRawButton(button)){
+         DriverStation.reportWarning("running button "+button+"fwd",true);
+         motor.set(newPower);
+     }
+     else{
+       motor.set(0);
+     }
+   } 
 
+   public void runPneumaticCompressor(Compressor comp, int button, boolean enabled){
+    if(m_stick.getRawButton(button)){
+        DriverStation.reportWarning("running compressor",true);
+        comp.enableDigital();
+
+    }
+    else{
+      DriverStation.reportWarning("compressor off",true);
+      comp.disable();
+    }
+  } 
+  public void runPneumaticSolenoid(Solenoid solenoid, int button, boolean enabled){
+   if(m_stick.getRawButton(button)){
+        DriverStation.reportWarning("running solenoid",true);
+        solenoid.set(true);
+
+   }
+   else{
+        DriverStation.reportWarning("solenoid off",true);
+        solenoid.set(false);
+     
+   }
+ } 
+ 
  /* public Spark getSpark(int motor)
   {
     switch(motor)
@@ -160,12 +194,24 @@ public class Robot extends TimedRobot {
    * used for any initialization code.
    */  @Override
   public void robotInit() {
+    if (tank){
+      m_tTankDrive.initialize();
+    }
     m_robotDrive.calibrate();
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
-    SmartDashboard.putData("Auto choices", m_chooser);
+    
+    m_chooser.setDefaultOption("Tank", tankOption);
+    m_chooser.addOption("Arcade", arcade);
+    SmartDashboard.putData("Driver choices", m_chooser);
+    
+    // speedStr = SmartDashboard.getString("Shooter Speed","0.7");
+    SmartDashboard.putString("Shooter Speed", speedStr);
    //Basic Camera 
     //CameraServer.getInstance().startAutomaticCapture();
+
+    //initialConveyorSensor = new DigitalInput(4);
+    //finalConveyerSensor = new DigitalInput(5);
+    IRSensor1 = new DigitalInput(7);
+    IRSensor2 = new DigitalInput(8);
 
     //Advanced Camera
     new Thread(() -> {
@@ -184,6 +230,7 @@ public class Robot extends TimedRobot {
         }
         Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
         outputStream.putFrame(output);
+        
       }
     }).start();
   }
@@ -200,9 +247,32 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
-    SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
-    SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
+      m_autoSelected = m_chooser.getSelected();
+      speedStr = SmartDashboard.getString("Shooter Speed","0.7");
+
+      // System.out.println("Drive: " + m_autoSelected);
+      // System.out.println("Shooter Speed: " + speedStr);
+      SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
+      SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
+      SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
+      SmartDashboard.putNumber("Ball Distance", vision.getDistance());
+      SmartDashboard.putBoolean("IR 1 Readings", IRSensor1.get());
+      SmartDashboard.putBoolean("IR 2 Readings", IRSensor2.get());  
+      switch (m_autoSelected) {
+         case tankOption:
+           tank = true;
+           break;
+         case arcade:
+           tank = false;
+           break;
+       }
+       
+       if (IRSensor1.get()==true || IRSensor2.get()==true)
+       {
+        //  runCANMechanism(conveyorMotor, 4, shootingPower, true);
+       }
+
+    
   }
 
   /**
@@ -218,15 +288,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autoSelected = m_chooser.getSelected();
-    m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
-    System.out.println("Auto selected: " + m_autoSelected);
+    
     // try {
     //Trajectory trajectory = TrajectoryUtil.fromPathweaverJson(Paths.get("/home/lvuser/deploy/YourPath.wpilib.json"));
     // }
     // catch (IOException e)
     // {}
-   
     ramsete.initialize();
   }
 
@@ -258,12 +325,20 @@ public class Robot extends TimedRobot {
   
   @Override
   public void teleopPeriodic() {
-
+    if (tank){
+    m_tTankDrive.execute();
+    }
+    shootingPower = Double.parseDouble(speedStr);
+    // motor, button, power
+    // runCANMechanism(shooterMotor, 4, shootingPower, true);
+    // runPneumaticCompressor(pcmCompressor, 2, true);
+    // runPneumaticSolenoid(firstSolenoidPCM, 3, true);
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
     final double invertAxis = 1;
     final double xOffset = 0.0;
+    //positive xOffset goes right
     //gets joystick values and creates curves
     double y = m_stick.getRawAxis(1);
     double yprime = invertAxis * Math.pow(y,3);
@@ -276,7 +351,7 @@ public class Robot extends TimedRobot {
     //The % power used
     final double turnLimit = 0.4;
     double speedLimit=0.5;
-    final double leftAdj = 1.3;
+    final double leftAdj = 0;
     //Reports joystick numbers
     DriverStation.reportWarning("Raw Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
     //Mathmomagic! For X and Y 
@@ -312,38 +387,9 @@ public class Robot extends TimedRobot {
       xprime*=slowFactor; 
     }
     //Actual drive part
-    
-    // if(Math.abs(xprime)<0.2)
-    //   rc.m_robotDrive.arcadeDrive(yprime, rc.m_robotDrive.getTurnRate()*Math.signum(xprime));
-    // else
-      // m_robotDrive.arcadeDrive(yprime, xprime+xOffset);
+    if (!tank){
       m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
-    
-
-    // if(0<m_stick.getRawAxis(4) && m_stick.getRawAxis(4)<-deadZone){
-    //   x=deadZone;
-    // }
-    // else if(0>m_stick.getRawAxis(4) && m_stick.getRawAxis(4)>-deadZone){
-    //   x=-deadZone;
-    // }
-    //if(m_stick.getRawAxis(4)>10)
-    // flywheel.arcadeDrive(1,0);
-    //  intake.run();
-    //  conveyer.run();
-    //  shooter.run();
-    //  climb.run();
-
-    // if(m_stick.getRawButton(1)){
-    //   if(Limelight.isTarget())
-    //     if(Limelight.getTx()!=0)
-    //       m_robotDrive.arcadeDrive(0,Limelight.getTx()*.1);
-    //     else
-    //       m_robotDrive.arcadeDrive(0, 0);
-    // }
-    // else
-    // m_robotDrive.arcadeDrive(-Math.pow(y,3)*.8, Math.pow(x,3)*.8);
-
-    
+    }
   }
 
   /**

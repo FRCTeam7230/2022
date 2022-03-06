@@ -45,7 +45,7 @@ public class FindPath {
 
 Trajectory trajectory;
 
-String trajectoryJSON = "/home/lvuser/deploy/pjhvaths/Unnamed.wpilib.json";
+String trajectoryJSON = "/home/lvuser/deploy/output/Nab a Ball then go to goal but for another.wpilib.json";
 
 DifferentialDriveVoltageConstraint autoVoltageConstraint =
         new DifferentialDriveVoltageConstraint(
