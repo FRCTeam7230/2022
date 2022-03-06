@@ -71,7 +71,6 @@ import edu.wpi.first.cscore.CvSink;
 import edu.wpi.first.cscore.CvSource;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
-
 // import java.io.IOException;
 // import java.nio.file.Paths;
 /**
@@ -100,6 +99,7 @@ public class Robot extends TimedRobot {
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
 
+  private ThresholdInRange vision = new ThresholdInRange();
   //private DigitalInput initialConveyerSensor;
   //private DigitalInput finalConveyerSensor; 
   private DigitalInput IRSensor1;
@@ -255,6 +255,7 @@ public class Robot extends TimedRobot {
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
+      SmartDashboard.putNumber("Ball Distance", vision.getDistance());
       SmartDashboard.putBoolean("IR 1 Readings", IRSensor1.get());
       SmartDashboard.putBoolean("IR 2 Readings", IRSensor2.get());  
       switch (m_autoSelected) {
