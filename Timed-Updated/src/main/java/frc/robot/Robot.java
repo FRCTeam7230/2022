@@ -99,12 +99,12 @@ public class Robot extends TimedRobot {
   private DriveSubsystem m_robotDrive = new DriveSubsystem();
   // Speed/turn adjustments in the TankDrive.java file
   private TankDrive m_tTankDrive = new TankDrive(m_robotDrive);
-  private FindPath pathOne = new FindPath("/home/lvuser/deploy/output/Nab a Ball then go to goal but for another.wpilib.json");
+  // private FindPath pathOne = new FindPath("/home/lvuser/deploy/output/Nab a Ball then go to goal but for another.wpilib.json");
   private boolean tank = false;
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
 
-  private ThresholdInRange vision = new ThresholdInRange();
+  // private ThresholdInRange vision = new ThresholdInRange();
   //private DigitalInput initialConveyerSensor;
   //private DigitalInput finalConveyerSensor; 
   private DigitalInput IRSensor1;
@@ -116,11 +116,11 @@ public class Robot extends TimedRobot {
   6: conveyor
   */
   // TODO: Change the ID of shooterMotor, or use different motor controllers
-  // private CANSparkMax shooterMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
+  private CANSparkMax shooterMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
   private CANSparkMax conveyorMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
   private VictorSPX intakeMotor = new VictorSPX(7);
   // private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-  private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
+  private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
   
   
   // Mechanism (mode id forward backward power)   
@@ -128,20 +128,20 @@ public class Robot extends TimedRobot {
   //  Pathweaver
   static {System.loadLibrary(Core.NATIVE_LIBRARY_NAME);}
 
-   RamseteIterative ramsete1 = new RamseteIterative(
-       pathOne.getPath(),
-       m_robotDrive::getPose,
-       new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
-       new SimpleMotorFeedforward(DriveConstants.ksVolts,
-                                  DriveConstants.kvVoltSecondsPerMeter,
-                                  DriveConstants.kaVoltSecondsSquaredPerMeter),
-       DriveConstants.kDriveKinematics,
-       m_robotDrive::getWheelSpeeds,
-       new PIDController(DriveConstants.kPDriveVel, 0, 0),
-       new PIDController(DriveConstants.kPDriveVel, 0, 0),
-       // RamseteCommand passes volts to the callback
-       m_robotDrive::tankDriveVolts
-   );
+  //  RamseteIterative ramsete1 = new RamseteIterative(
+  //      pathOne.getPath(),
+  //      m_robotDrive::getPose,
+  //      new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
+  //      new SimpleMotorFeedforward(DriveConstants.ksVolts,
+  //                                 DriveConstants.kvVoltSecondsPerMeter,
+  //                                 DriveConstants.kaVoltSecondsSquaredPerMeter),
+  //      DriveConstants.kDriveKinematics,
+  //      m_robotDrive::getWheelSpeeds,
+  //      new PIDController(DriveConstants.kPDriveVel, 0, 0),
+  //      new PIDController(DriveConstants.kPDriveVel, 0, 0),
+  //      // RamseteCommand passes volts to the callback
+  //      m_robotDrive::tankDriveVolts
+  //  );
    public void runCANMechanism(CANSparkMax motor, int button, double power, boolean invert){
      double newPower = power;
      if (invert){
@@ -229,8 +229,8 @@ public class Robot extends TimedRobot {
     }
     m_robotDrive.calibrate();
     
-    m_chooser.setDefaultOption("Tank", tankOption);
-    m_chooser.addOption("Arcade", arcade);
+    m_chooser.setDefaultOption("Arcade", arcade);
+    m_chooser.addOption("Tank", tankOption);
     SmartDashboard.putData("Driver choices", m_chooser);
     
     // speedStr = SmartDashboard.getString("Shooter Speed","0.7");
@@ -285,7 +285,7 @@ public class Robot extends TimedRobot {
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
-      SmartDashboard.putNumber("Ball Distance", vision.getDistance());
+      // SmartDashboard.putNumber("Ball Distance", vision.getDistance());
       SmartDashboard.putBoolean("IR 1 Readings", IRSensor1.get());
       SmartDashboard.putBoolean("IR 2 Readings", IRSensor2.get());  
       switch (m_autoSelected) {
@@ -324,7 +324,7 @@ public class Robot extends TimedRobot {
     // }
     // catch (IOException e)
     // {}
-    ramsete1.initialize();
+    // ramsete1.initialize();
   }
 
   /**
@@ -332,7 +332,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-    ramsete1.execute();
+    // ramsete1.execute();
    /* switch (m_autoSelected) {
       case kCustomAuto:
         // Put custom auto code here
@@ -359,8 +359,9 @@ public class Robot extends TimedRobot {
     m_tTankDrive.execute();
     }
     shootingPower = Double.parseDouble(speedStr);
+    runIntake(8);
     // motor, button, power
-    // runCANMechanism(shooterMotor, 4, shootingPower, true);
+    runCANMechanism(shooterMotor, 7, shootingPower, true);
     // runPneumaticCompressor(pcmCompressor, 2, true);
     // runPneumaticSolenoid(intakeSolenoid, 3, true);
     //establishes minimum and maximums of deadzone
