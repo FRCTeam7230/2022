@@ -66,6 +66,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 //import edu.wpi.first.cameraserver.CameraServer;
 
 /*Advanced Camera Imports*/
+import org.opencv.core.*;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
