@@ -27,10 +27,10 @@ import com.revrobotics.CANSparkMax;
 public class DriveSubsystem extends SubsystemBase {
  
   //test
-  // public Spark l_motor1=  new Spark(0);
-  // public Spark r_motor1 = new Spark(2);
-  // public Spark l_motor2 = new Spark(1);
-  // public Spark r_motor2 = new Spark(3);
+    // public Spark l_motor1=  new Spark(0);
+    // public Spark r_motor1 = new Spark(2);
+    // public Spark l_motor2 = new Spark(1);
+    // public Spark r_motor2 = new Spark(3);
   public CANSparkMax l_motor1 = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
   public CANSparkMax r_motor1 = new CANSparkMax(3, CANSparkMax.MotorType.kBrushless);
   public CANSparkMax l_motor2 = new CANSparkMax(2, CANSparkMax.MotorType.kBrushless);

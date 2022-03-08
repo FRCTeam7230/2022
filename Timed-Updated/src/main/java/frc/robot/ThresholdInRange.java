@@ -29,7 +29,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.SwingWorker;
+// import javax.swing.SwingWorker;
+import java.lang.Thread;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.opencv.core.Core;
@@ -45,7 +46,7 @@ import java.awt.event.*;
 import java.net.URL;
 import javax.swing.*;
 
-//import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cameraserver.CameraServer;
 
 public class ThresholdInRange {	
 	public static int varForTimer = 0;
@@ -56,6 +57,7 @@ public class ThresholdInRange {
     
   //measurement:
     private static double focalLength = 2*320.8; //focal length in pixels
+//    private static double ballRadius = 4.5; //cm
     private static double ballRadius = 12.5;
     private static double distanceCameraToBall = 0;
     private static int robotDepth = 0;
@@ -71,44 +73,47 @@ public class ThresholdInRange {
     private JFrame frame;
     private JLabel imgCaptureLabel;
     private JLabel imgDetectionLabel;
-    private CaptureTask captureTask;
+    // private CaptureTask captureTask;
     
     public ThresholdInRange() {
         int cameraDevice = 0;
         
-        // if (args.length > 0) {
+        // if (args.length > 0) {   
         //     cameraDevice = Integer.parseInt(args[0]);
         // }
 
-        cap = new VideoCapture(cameraDevice);
-        if (!cap.isOpened()) {
-            System.err.println("Cannot open camera: " + cameraDevice);
-            System.exit(0);
-        }
-        if (!cap.read(matFrame)) {
-            System.err.println("Cannot read camera stream.");
-            System.exit(0);
-        }
-        // Create and set up the window.
-        frame = new JFrame(WINDOW_NAME);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent windowEvent) {
-                captureTask.cancel(true);
-            }
-        });
-        // Set up the content pane.
-        Image img = HighGui.toBufferedImage(matFrame);
-        addComponentsToPane(frame.getContentPane(), img);
-        // Use the content pane's default BorderLayout. No need for
-        // setLayout(new BorderLayout());
-        // Display the window.
+        //cap = new VideoCapture(cameraDevice);
         
-        frame.pack();
-        frame.setVisible(true);
-        captureTask = new CaptureTask();
-        captureTask.execute();
+
+        // if (!cap.isOpened()) {
+        //     System.err.println("Cannot open camera: " + cameraDevice);
+        //     System.exit(0);
+        // }
+        // if (!cap.read(matFrame)) {
+        //     System.err.println("Cannot read camera stream.");
+        //     System.exit(0);
+        // }
+
+        // Create and set up the window.
+        // frame = new JFrame(WINDOW_NAME);s
+        // frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // frame.addWindowListener(new WindowAdapter() {
+        //     @Override
+        //     public void windowClosing(WindowEvent windowEvent) {
+        //         // captureTask.cancel(true);
+        //     }
+        // });
+        // // Set up the content pane.
+        // Image img = HighGui.toBufferedImage(matFrame);
+        // addComponentsToPane(frame.getContentPane(), img);
+        // // Use the content pane's default BorderLayout. No need for
+        // // setLayout(new BorderLayout());
+        // // Display the window.
+        
+        // frame.pack();
+        // frame.setVisible(true);
+        // captureTask = new CaptureTask();
+        // captureTask.execute();
     }
     
     private class CaptureTask extends SwingWorker<Void, Mat> {
@@ -116,10 +121,10 @@ public class ThresholdInRange {
         protected Void doInBackground() {
             Mat matFrame = new Mat();
             while (!isCancelled()) {
-                if (!cap.read(matFrame)) {
-                    break;
-                }
-                publish(matFrame.clone());
+                // if (!cap.read(matFrame)) {
+                //     break;
+                // }
+                // publish(matFrame.clone());
             }
             return null;
         }
@@ -137,7 +142,7 @@ public class ThresholdInRange {
 //                    new Scalar(180, 240, 255), thresh);
             
             //blue color:
-            Core.inRange(frameHSV, new Scalar(95, 50, 50),
+            Core.inRange(frameHSV, new Scalar(95, 100, 90),
                     new Scalar(110, 255, 255), thresh);
 
             Core.split(thresh, frames);
@@ -181,17 +186,20 @@ public class ThresholdInRange {
 		                    //distance from camera to ball
                       distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
                       
-                      		//distance from robot to ball
-                      ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2 - robotDepth;
+                      		//distance from robot to ball                      
+                      ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
                       
                       String Dsize = "Distance: " + ballDistance + "cm";
-                      int kat1 = screenCenterX-cX;
-                      int kat2 = screenCenterY-cY;                      
+                      int kat1 = cX-screenCenterX;
+                      int kat2 = cY-screenCenterY;                      
                     
-                      double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*distanceCameraToBall)))/2)*2;
-//                      double ballAngleX = (double) Math.toDegrees(Math.atan(distanceCameraToBall/kat1*));
-                      double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*distanceCameraToBall)))/2)*2;
+                      double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/5)*5;
+                      double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
 
+                      
+//                      String string = ballDistance + " ";
+//                      Imgproc.putText(frame, string, new Point(20, 300), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 100, 0), 4);
+                      
 //						new Point(x, y) 
                       //showing angles and distance on the screen
                       String stringBallAngleX = ballAngleX + " X";
