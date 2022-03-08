@@ -14,6 +14,7 @@ import java.lang.Math;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Compressor;
 // import edu.wpi.first.wpilibj.buttons.Button;
 // import edu.wpi.first.math.trajectory.TrajectoryUtil;
@@ -54,6 +55,8 @@ import frc.robot.Mechanism;
 import com.revrobotics.CANSparkMax;
 import frc.robot.commands.TankDrive;
 import frc.robot.subsystems.Drivetrain;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import frc.robot.Constants.DriveConstants;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Joystick;
@@ -74,7 +77,7 @@ import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 
 // import java.io.IOException;
 // import java.nio.file.Paths;
@@ -103,10 +106,11 @@ public class Robot extends TimedRobot {
   private boolean tank = false;
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
-  private DigitalInput initialConveyorSensor;
-  private DigitalInput finalConveyorSensor;
+  // private DigitalInput initialConveyorSensor;
+  boolean prevState = false;
+  // private DigitalInput finalConveyorSensor;
   // TODO: Change the ID of shooterMotor, or use different motor controllers
-  private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
+  // private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
   // Mechanism (mode id forward backward power)   
@@ -145,9 +149,9 @@ public class Robot extends TimedRobot {
        motor.set(0);
      }
    } 
-
+    
    public void runPneumaticCompressor(Compressor comp, int button, boolean enabled){
-    if(m_stick.getRawButton(button)){
+    if(m_stick.getRawButton(1)){
         DriverStation.reportWarning("running compressor",true);
         comp.enableDigital();
 
@@ -158,7 +162,7 @@ public class Robot extends TimedRobot {
     }
   } 
   public void runPneumaticSolenoid(Solenoid solenoid, int button, boolean enabled){
-   if(m_stick.getRawButton(button)){
+   if(m_stick.getRawButton(2)){
         DriverStation.reportWarning("running solenoid",true);
         solenoid.set(true);
 
@@ -166,9 +170,14 @@ public class Robot extends TimedRobot {
    else{
         DriverStation.reportWarning("solenoid off",true);
         solenoid.set(false);
-     
    }
  } 
+ public void resetEncoders(){
+    m_robotDrive.getLeftEncoder().reset();
+    m_robotDrive.getRightEncoder().reset();
+  
+
+ }
  
  /* public Spark getSpark(int motor)
   {
@@ -198,19 +207,20 @@ public class Robot extends TimedRobot {
       m_tTankDrive.initialize();
     }
     m_robotDrive.calibrate();
-    
+    // Resets the encoders to read a distance of zero
+
     m_chooser.setDefaultOption("Tank", tankOption);
     m_chooser.addOption("Arcade", arcade);
     SmartDashboard.putData("Driver choices", m_chooser);
-    
+    resetEncoders();
     // speedStr = SmartDashboard.getString("Shooter Speed","0.7");
     SmartDashboard.putString("Shooter Speed", speedStr);
    //Basic Camera 
     //CameraServer.getInstance().startAutomaticCapture();
 
    // Initializes a DigitalInput on DIO 4 and 5
-   initialConveyorSensor = new DigitalInput(4);
-   finalConveyorSensor = new DigitalInput(5);
+  //  initialConveyorSensor = new DigitalInput(4);
+  //  finalConveyorSensor = new DigitalInput(5);
 
     //Advanced Camera
     new Thread(() -> {
@@ -231,6 +241,7 @@ public class Robot extends TimedRobot {
         outputStream.putFrame(output);
       }
     }).start();
+    
   }
 
   
@@ -247,11 +258,11 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
       m_autoSelected = m_chooser.getSelected();
       speedStr = SmartDashboard.getString("Shooter Speed","0.7");
-
       System.out.println("Drive: " + m_autoSelected);
       System.out.println("Shooter Speed: " + speedStr);
-      SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
-      SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
+      SmartDashboard.putNumber("LEncoder", Math.round(1000*m_robotDrive.getLeftEncoder().getDistance()));
+      SmartDashboard.putNumber("REncoder", Math.round(1000*m_robotDrive.getRightEncoder().getDistance())); 
+       
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
       
       //read values periodically
@@ -263,8 +274,8 @@ public class Robot extends TimedRobot {
       SmartDashboard.putNumber("LimelightX", x);
       SmartDashboard.putNumber("LimelightY", y);
       SmartDashboard.putNumber("LimelightArea", area);
-      SmartDashboard.putBoolean("Conveyor Sensor In", initialConveyorSensor.get());
-      SmartDashboard.putBoolean("Conveyor Sensor Out", finalConveyorSensor.get());
+      // SmartDashboard.putBoolean("Conveyor Sensor In", initialConveyorSensor.get());
+      // SmartDashboard.putBoolean("Conveyor Sensor Out", finalConveyorSensor.get());
       switch (m_autoSelected) {
          case tankOption:
            tank = true;
@@ -331,7 +342,7 @@ public class Robot extends TimedRobot {
     }
     shootingPower = Double.parseDouble(speedStr);
     // motor, button, power
-    runCANMechanism(shooterMotor, 4, shootingPower, true);
+    // runCANMechanism(shooterMotor, 4, shootingPower, true);
     runPneumaticCompressor(pcmCompressor, 2, true);
     runPneumaticSolenoid(firstSolenoidPCM, 3, true);
     //establishes minimum and maximums of deadzone
@@ -348,9 +359,9 @@ public class Robot extends TimedRobot {
     double xprime = Math.pow(x,3);
       // double xprime=x;
     double accelFactor = 2.0;
-    double slowFactor = 0.85;
+    double slowFactor = 0.75;
     //The % power used
-    final double turnLimit = 0.4;
+    final double turnLimit = 0.8;
     double speedLimit=0.5;
     final double leftAdj = 0;
     //Reports joystick numbers
@@ -388,10 +399,37 @@ public class Robot extends TimedRobot {
       xprime*=slowFactor; 
     }
     //Actual drive part
-    if (!tank){
-      m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
+    if (!tank && !m_stick.getRawButton(3)){
+       m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
     }
+    double leftDistance = 1000*m_robotDrive.getLeftEncoder().getDistance();
+    double rightDistance = 1000*m_robotDrive.getRightEncoder().getDistance();
+    int encoderTarget = 20;
+    int error = 2;
+    int minimumEncoder = encoderTarget - error;
+    int maximumEncoder = encoderTarget + error;
+    boolean nowState = m_stick.getRawButton(3);
+    double speed = 0.65;
+    if (prevState == false && nowState == true){
+      
+      resetEncoders();
+    }
+    prevState=m_stick.getRawButton(3);
+    //replace the 100s with a rounded range for the encoder counts
+
+    if(nowState){
+        if(leftDistance < minimumEncoder && rightDistance > -minimumEncoder) {
+          m_robotDrive.arcadeDrive(speed, 0);
+        }
+
+         else if (leftDistance > maximumEncoder && rightDistance < -maximumEncoder) {
+          m_robotDrive.arcadeDrive(-speed, 0);
+         } else {  
+          m_robotDrive.arcadeDrive(0, 0);
+        }}
   }
+  
+  
 
   /**
    * This function is called periodically during test mode.

@@ -47,7 +47,7 @@ public class TankDrive extends CommandBase {
     @Override
     public void initialize() {
     }
-
+    
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
@@ -57,7 +57,7 @@ public class TankDrive extends CommandBase {
         final double turnLimit = 0.4;
         double speedLimit=0.7;
         final double lTankAdj= 0.1;
-        double right = m_joystick.getRawAxis(1);
+        double right = m_joystick.getRawAxis(0);
         double left = m_joystick.getRawAxis(3);
         double lprime = -Math.pow(right,3);
         double rprime = Math.pow(left,3);

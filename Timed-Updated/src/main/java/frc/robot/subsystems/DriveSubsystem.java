@@ -27,14 +27,14 @@ import com.revrobotics.CANSparkMax;
 public class DriveSubsystem extends SubsystemBase {
  
   //test
-  // public Spark l_motor1=  new Spark(0);
-  // public Spark r_motor1 = new Spark(2);
-  // public Spark l_motor2 = new Spark(1);
-  // public Spark r_motor2 = new Spark(3);
-  public CANSparkMax l_motor1 = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
-  public CANSparkMax r_motor1 = new CANSparkMax(3, CANSparkMax.MotorType.kBrushless);
-  public CANSparkMax l_motor2 = new CANSparkMax(2, CANSparkMax.MotorType.kBrushless);
-  public CANSparkMax r_motor2 = new CANSparkMax(4, CANSparkMax.MotorType.kBrushless);
+  public Spark l_motor1=  new Spark(0);
+  public Spark r_motor1 = new Spark(2);
+  public Spark l_motor2 = new Spark(1);
+  public Spark r_motor2 = new Spark(3);
+  // public CANSparkMax l_motor1 = new CANSparkMax(1, CANSparkMax.MotorType.kBrushless);
+  // public CANSparkMax r_motor1 = new CANSparkMax(3, CANSparkMax.MotorType.kBrushless);
+  // public CANSparkMax l_motor2 = new CANSparkMax(2, CANSparkMax.MotorType.kBrushless);
+  // public CANSparkMax r_motor2 = new CANSparkMax(4, CANSparkMax.MotorType.kBrushless);
   // The motors on the left side of the drive.
   // private final SpeedControllerGroup m_leftMotors =
   // new SpeedControllerGroup(l_motor1,
@@ -56,12 +56,12 @@ public class DriveSubsystem extends SubsystemBase {
 
   // The left-side drive encoder
   private final Encoder m_leftEncoder =
-      new Encoder(3, 4,
+      new Encoder(0, 1,
                   DriveConstants.kLeftEncoderReversed);
 
   // The right-side drive encoder
   private final Encoder m_rightEncoder =
-      new Encoder(1, 2,
+      new Encoder(2, 3,
                   DriveConstants.kRightEncoderReversed);
 
   // The gyro sensoroo
@@ -69,7 +69,12 @@ public class DriveSubsystem extends SubsystemBase {
 
   // Odometry class for tracking robot pose
   private final DifferentialDriveOdometry m_odometry;
+  
+  // P Loop
+  double kP = 1;
 
+  // Assuming no wheel slip, the difference in encoder distances is proportional to the heading error
+  double error = m_leftEncoder.getDistance() - m_rightEncoder.getDistance();
   /**
    * Creates a new DriveSubsystem.
    */
@@ -129,10 +134,16 @@ public class DriveSubsystem extends SubsystemBase {
   public void calibrate(){
     m_gyro.reset();
   }
-  
+
+  // (m_stick.getRawButton(3)){
+  //     m_drive.tankDrive(100, 100);
 
   public void drive(double left, double right) {
     m_drive.tankDrive(left, right);
+    
+
+  // Drives forward continuously at half speed, using the encoders to stabilize the heading
+ // m_drive.tankDrive(#, #);
 }
   /**
    * Controls the left and right sides of the drive directly with voltages.
