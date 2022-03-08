@@ -8,6 +8,8 @@
 package frc.robot;
 
 import java.lang.Math;
+import java.util.Collections;
+import java.util.List;
 
 // import edu.wpi.first.wpilibj.Filesystem;
 // import java.nio.file.*;
@@ -70,6 +72,7 @@ import org.opencv.imgproc.Imgproc;
 import edu.wpi.first.cscore.CvSink;
 import edu.wpi.first.cscore.CvSource;
 import edu.wpi.first.cscore.UsbCamera;
+import edu.wpi.first.cscore.VideoMode.PixelFormat;
 import edu.wpi.first.cameraserver.CameraServer;
 
 // import java.io.IOException;
@@ -99,7 +102,8 @@ public class Robot extends TimedRobot {
   private boolean tank = false;
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
-  private ThresholdInRange vision = new ThresholdInRange();
+
+  //private ThresholdInRange vision = new ThresholdInRange();
   //private DigitalInput initialConveyerSensor;
   //private DigitalInput finalConveyerSensor; 
   private DigitalInput IRSensor1;
@@ -194,6 +198,8 @@ public class Robot extends TimedRobot {
    * used for any initialization code.
    */  @Override
   public void robotInit() {
+    Thread m_visionThread;
+    
     if (tank){
       m_tTankDrive.initialize();
     }
@@ -217,25 +223,121 @@ public class Robot extends TimedRobot {
     new Thread(() -> {
       UsbCamera camera = CameraServer.startAutomaticCapture();
       camera.setResolution(640, 480);
+      camera.setVideoMode(PixelFormat.kYUYV, 640, 480, 30);
 
       CvSink cvSink = CameraServer.getVideo();
       CvSource outputStream = CameraServer.putVideo("Blur", 640, 480);
+      CvSource outputStream2 = CameraServer.putVideo("Target", 640, 480);
 
       Mat source = new Mat();
-      Mat output = new Mat();
+      //Mat output = new Mat();
 
       while(!Thread.interrupted()) {
         if (cvSink.grabFrame(source) == 0) {
+          // Send the output the error.
+          outputStream.notifyError(cvSink.getError());
           continue;
         }
-        Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
-        outputStream.putFrame(output);
+        //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+        //outputStream.putFrame(output);
+        Mat processed = process(source);
+        outputStream.putFrame(source);
+        outputStream2.putFrame(processed);
         
       }
     }).start();
   }
 
+public static int varForTimer = 0;
+private static int screenCenterX = 317;
+private static int screenCenterY = 240;
+
+//screen size: x= 634, y =  480
+
+//measurement:
+private static double focalLength = 2*320.8; //focal length in pixels
+private static double ballRadius = 12.5;
+private static double distanceCameraToBall = 0;
+
+private static double depth = ballRadius;
+private static int robotDepth = 0;
+private static double cameraAngle = 90.0;//change this to another angle from flour
+private static double ballDistance;
+
+private Mat process(Mat frame) {
+  //Mat frame = frames.get(frames.size() - 1);
+  Mat frameHSV = new Mat();
+  Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
+  Mat thresh = new Mat();
   
+  //red color:
+ Core.inRange(frameHSV, new Scalar(0, 130, 130),
+         new Scalar(180, 240, 255), thresh);
+  
+  //blue color:
+  // Core.inRange(frameHSV, new Scalar(95, 50, 50),
+          // new Scalar(110, 255, 255), thresh);
+List<Mat> frames = Collections.emptyList();//new List<Mat>();
+  Core.split(thresh, frames);
+  Mat gray = frames.get(0);
+
+//Default:
+//            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
+//                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
+
+  Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
+  
+
+  Imgproc.medianBlur(gray, gray, 5);
+  Mat circles = new Mat();    	        	  
+          
+  Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
+            2*(double)gray.rows(), // change this value to detect circles with different distances to each other
+            50.0, 30.0, 0, 0); // change the last two parameters
+                  // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
+  for (int x = 0; x < circles.cols(); x++) {
+    double[] c = circles.get(0, x);
+      Point center = new Point(Math.round(c[0]), Math.round(c[1]));
+              
+      int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
+      int cY = (int) Math.round(c[1]/5 - 1)*5;
+              
+      String coordinateXY = cX + "," + cY;
+              
+              // circle center
+      Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
+              // circle outline
+      int radius = (int) Math.round(c[2]);
+      Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
+              
+      Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
+        
+//                      Imgproc.putText(frame, text, coordinates, fontType, fontSize, color, thickness)
+              
+            //distance from camera to ball
+          distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
+          
+              //distance from robot to ball                      
+          ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
+          
+          String Dsize = "Distance: " + ballDistance + "cm";
+          int kat1 = cX-screenCenterX;
+          int kat2 = cY-screenCenterY;                      
+        
+          double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/5)*5;
+          double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
+
+//						new Point(x, y) 
+          //showing angles and distance on the screen
+          String stringBallAngleX = ballAngleX + " X";
+          String stringBallAngleY =  ballAngleY + " Y "; 
+          Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
+          Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
+          Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
+    }
+    return frame;
+}
+
 
   /**
    * This function is called every robot packet, no matter the mode. Use
@@ -255,7 +357,7 @@ public class Robot extends TimedRobot {
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
-      SmartDashboard.putNumber("Ball Distance", vision.getDistance());
+      //SmartDashboard.putNumber("Ball Distance", vision.getDistance());
       SmartDashboard.putBoolean("IR 1 Readings", IRSensor1.get());
       SmartDashboard.putBoolean("IR 2 Readings", IRSensor2.get());  
       switch (m_autoSelected) {
