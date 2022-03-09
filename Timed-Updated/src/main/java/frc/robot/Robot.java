@@ -225,17 +225,15 @@ public class Robot extends TimedRobot {
     //Advanced Camerat
     new Thread(() -> {
       UsbCamera camera = CameraServer.startAutomaticCapture();
-      camera.setResolution(640, 480);
-      camera.setVideoMode(PixelFormat.kYUYV, 640, 480, 30);
+      camera.setResolution(320, 240);
+      camera.setVideoMode(PixelFormat.kYUYV, 320, 240, 15);
 
       CvSink cvSink = CameraServer.getVideo();
-      CvSource outputStream = CameraServer.putVideo("Blur", 640, 480);
-      CvSource outputStream2 = CameraServer.putVideo("Target", 640, 480);
+      CvSource outputStream = CameraServer.putVideo("Blur", 320, 240);
+      CvSource outputStream2 = CameraServer.putVideo("Target", 320, 240);
 
       Mat source = new Mat();
       //Mat output = new Mat();
-      
-      SmartDashboard.putBoolean("dd", Thread.interrupted());
       
       while(!Thread.interrupted()) {
         if (cvSink.grabFrame(source) == 0) {
@@ -253,22 +251,19 @@ public class Robot extends TimedRobot {
         // System.out.println("ddd"s);
         // SmartDashboard.(processed);
         outputStream2.putFrame(processed);
-        // String st = ballDistance + " ";
-        // SmartDashboard.putString("rr -", "11");
       }
-      
-      
     }).start();
   }
 
 public static int varForTimer = 0;
-private static int screenCenterX = 317;
-private static int screenCenterY = 240;
+private static int screenCenterX = 160;
+private static int screenCenterY = 120;
+
 
 //screen size: x= 634, y =  480
 
 //measurement:
-private static double focalLength = 2*320.8; //focal length in pixels
+private static double focalLength = 320.8; //focal length in pixels
 private static double ballRadius = 12.5;
 private static double distanceCameraToBall = 0;
 
@@ -276,8 +271,6 @@ private static double depth = ballRadius;
 private static int robotDepth = 0;
 private static double cameraAngle = 90.0;//change this to another angle from flour
 public static double ballDistance;
-
-
 
 private Mat process(Mat frame) {
   
@@ -328,15 +321,15 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
       Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
               // circle outline
       int radius = (int) Math.round(c[2]);
-      // Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
+      Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
               
-      // Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
+      Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
         
 //                      Imgproc.putText(frame, text, coordinates, fontType, fontSize, color, thickness)
               
             //distance from camera to ball
           distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
-          
+            
               //distance from robot to ball                      
           ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
 
@@ -353,16 +346,15 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
 //						new Point(x, y) 
           //showing angles and distance on the screen
 
-          // String stringBallAngleX = ballAngleX + " X";
-          // String stringBallAngleY =  ballAngleY + " Y "; 
-          // Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
+          String stringBallAngleX = ballAngleX + " X";
+          String stringBallAngleY =  ballAngleY + " Y "; 
+          Imgproc.putText(frame, Dsize, new Point(10, 20), Imgproc.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 0), 1);	
           // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
           // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
     }
     
     return frameHSV;
 }
-
 
   /**
    * This function is called every robot packet, no matter the mode. Use
@@ -399,8 +391,6 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
        {
          runCANMechanism(conveyorMotor, 4, shootingPower, true);
        }
-
-    
   }
 
   /**
