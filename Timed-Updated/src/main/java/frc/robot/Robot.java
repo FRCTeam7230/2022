@@ -76,6 +76,8 @@ import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoMode.PixelFormat;
 import edu.wpi.first.cameraserver.CameraServer;
 
+import java.util.ArrayList;
+
 // import java.io.IOException;
 // import java.nio.file.Paths;
 /**
@@ -220,7 +222,7 @@ public class Robot extends TimedRobot {
     IRSensor1 = new DigitalInput(7);
     IRSensor2 = new DigitalInput(8);
 
-    //Advanced Camera
+    //Advanced Camerat
     new Thread(() -> {
       UsbCamera camera = CameraServer.startAutomaticCapture();
       camera.setResolution(640, 480);
@@ -232,20 +234,30 @@ public class Robot extends TimedRobot {
 
       Mat source = new Mat();
       //Mat output = new Mat();
-
+      
+      SmartDashboard.putBoolean("dd", Thread.interrupted());
+      
       while(!Thread.interrupted()) {
         if (cvSink.grabFrame(source) == 0) {
           // Send the output the error.
           outputStream.notifyError(cvSink.getError());
           continue;
         }
+        // SmartDashboard.putString("temp", "1");
         //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
         //outputStream.putFrame(output);
         Mat processed = process(source);
         outputStream.putFrame(source);
+
+
+        // System.out.println("ddd"s);
+        // SmartDashboard.(processed);
         outputStream2.putFrame(processed);
-        
+        // String st = ballDistance + " ";
+        // SmartDashboard.putString("rr -", "11");
       }
+      
+      
     }).start();
   }
 
@@ -263,11 +275,16 @@ private static double distanceCameraToBall = 0;
 private static double depth = ballRadius;
 private static int robotDepth = 0;
 private static double cameraAngle = 90.0;//change this to another angle from flour
-private static double ballDistance;
+public static double ballDistance;
+
+
 
 private Mat process(Mat frame) {
-  //Mat frame = frames.get(frames.size() - 1);
-  Mat frameHSV = new Mat();
+  
+  // SmartDashboard.putString("rr: ", "11");
+  // Mat frame = frames.get(frames.size() - 1);
+  Mat frameHSV = new Mat();  
+
   Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
   Mat thresh = new Mat();
   
@@ -278,7 +295,7 @@ private Mat process(Mat frame) {
   //blue color:
   // Core.inRange(frameHSV, new Scalar(95, 50, 50),
           // new Scalar(110, 255, 255), thresh);
-List<Mat> frames = Collections.emptyList();//new List<Mat>();
+List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
   Core.split(thresh, frames);
   Mat gray = frames.get(0);
 
@@ -286,8 +303,7 @@ List<Mat> frames = Collections.emptyList();//new List<Mat>();
 //            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
 //                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
 
-  Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
-  
+  // Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
 
   Imgproc.medianBlur(gray, gray, 5);
   Mat circles = new Mat();    	        	  
@@ -297,6 +313,9 @@ List<Mat> frames = Collections.emptyList();//new List<Mat>();
             50.0, 30.0, 0, 0); // change the last two parameters
                   // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
   for (int x = 0; x < circles.cols(); x++) {
+    SmartDashboard.putString("TestA: ", "0");
+    System.out.println("TestA");
+
     double[] c = circles.get(0, x);
       Point center = new Point(Math.round(c[0]), Math.round(c[1]));
               
@@ -309,9 +328,9 @@ List<Mat> frames = Collections.emptyList();//new List<Mat>();
       Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
               // circle outline
       int radius = (int) Math.round(c[2]);
-      Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
+      // Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
               
-      Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
+      // Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
         
 //                      Imgproc.putText(frame, text, coordinates, fontType, fontSize, color, thickness)
               
@@ -320,23 +339,28 @@ List<Mat> frames = Collections.emptyList();//new List<Mat>();
           
               //distance from robot to ball                      
           ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
-          
+
           String Dsize = "Distance: " + ballDistance + "cm";
+          SmartDashboard.putString("Cameraa", Dsize);
           int kat1 = cX-screenCenterX;
-          int kat2 = cY-screenCenterY;                      
+          int kat2 = cY-screenCenterY; 
+          SmartDashboard.putString("TestB: ", "0");
+          System.out.println("TestB");                     
         
           double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/5)*5;
           double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
 
 //						new Point(x, y) 
           //showing angles and distance on the screen
-          String stringBallAngleX = ballAngleX + " X";
-          String stringBallAngleY =  ballAngleY + " Y "; 
-          Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
-          Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-          Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
+
+          // String stringBallAngleX = ballAngleX + " X";
+          // String stringBallAngleY =  ballAngleY + " Y "; 
+          // Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
+          // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
+          // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
     }
-    return frame;
+    
+    return frameHSV;
 }
 
 
@@ -353,8 +377,9 @@ List<Mat> frames = Collections.emptyList();//new List<Mat>();
       m_autoSelected = m_chooser.getSelected();
       speedStr = SmartDashboard.getString("Shooter Speed","0.7");
 
-      System.out.println("Drive: " + m_autoSelected);
-      System.out.println("Shooter Speed: " + speedStr);
+      // System.out.println("Drive: " + m_autoSelected);
+      // System.out.println("Shooter Speed: " + speedStr);
+      System.out.println("Distance: " + ballDistance);
       SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
       SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
