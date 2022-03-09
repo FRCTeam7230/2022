@@ -8,13 +8,20 @@
 package frc.robot;
 
 import java.lang.Math;
+import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.*;
+import java.util.function.Supplier;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 
 // import edu.wpi.first.wpilibj.Filesystem;
 // import java.nio.file.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Compressor;
 // import edu.wpi.first.wpilibj.buttons.Button;
 // import edu.wpi.first.math.trajectory.TrajectoryUtil;
@@ -55,9 +62,7 @@ import frc.robot.Mechanism;
 import com.revrobotics.CANSparkMax;
 import frc.robot.commands.TankDrive;
 import frc.robot.subsystems.Drivetrain;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
-import frc.robot.Constants.DriveConstants;
-
+//import frc.robot.ThresholdInRange;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
@@ -67,18 +72,23 @@ import edu.wpi.first.wpilibj.DigitalInput;
 //import edu.wpi.first.cameraserver.CameraServer;
 
 /*Advanced Camera Imports*/
+import org.opencv.core.*;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 import edu.wpi.first.cscore.CvSink;
 import edu.wpi.first.cscore.CvSource;
 import edu.wpi.first.cscore.UsbCamera;
+import edu.wpi.first.cscore.VideoMode.PixelFormat;
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import frc.robot.Constants.DriveConstants;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-
 // import java.io.IOException;
 // import java.nio.file.Paths;
 /**
@@ -106,21 +116,32 @@ public class Robot extends TimedRobot {
   private boolean tank = false;
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
-  // private DigitalInput initialConveyorSensor;
   boolean prevState = false;
-  // private DigitalInput finalConveyorSensor;
+  //private ThresholdInRange vision = new ThresholdInRange();
+  //private DigitalInput initialConveyerSensor;
+  //private DigitalInput finalConveyerSensor; 
+  private DigitalInput IRSensor1;
+  private DigitalInput IRSensor2;
+  /*
+  * CAN IDS:
+  1 - 4: driving motors
+  5: conveyor
+  6: shooter
+  */
   // TODO: Change the ID of shooterMotor, or use different motor controllers
-  // private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
+  private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
+  private CANSparkMax conveyorMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
   // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
-  NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-  NetworkTableEntry tx = table.getEntry("tx");
-  NetworkTableEntry ty = table.getEntry("ty");
-  NetworkTableEntry ta = table.getEntry("ta");
-   
+  NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
+  NetworkTableEntry bD = table.getEntry("Ball Distance");
+  NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
+  NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
+  //  URI u = new URI("http://roborio-7230-frc.local:1181/");
+  //  URI v = new URI("http://10.72.30.2.1181/stream.mjpg");
 
    RamseteIterative ramsete = new RamseteIterative(
        fp.getPath(),
@@ -149,9 +170,14 @@ public class Robot extends TimedRobot {
        motor.set(0);
      }
    } 
-    
+   public void resetEncoders(){
+    m_robotDrive.getLeftEncoder().reset();
+    m_robotDrive.getRightEncoder().reset();
+  
+
+ }
    public void runPneumaticCompressor(Compressor comp, int button, boolean enabled){
-    if(m_stick.getRawButton(1)){
+    if(m_stick.getRawButton(button)){
         DriverStation.reportWarning("running compressor",true);
         comp.enableDigital();
 
@@ -162,7 +188,7 @@ public class Robot extends TimedRobot {
     }
   } 
   public void runPneumaticSolenoid(Solenoid solenoid, int button, boolean enabled){
-   if(m_stick.getRawButton(2)){
+   if(m_stick.getRawButton(button)){
         DriverStation.reportWarning("running solenoid",true);
         solenoid.set(true);
 
@@ -170,14 +196,9 @@ public class Robot extends TimedRobot {
    else{
         DriverStation.reportWarning("solenoid off",true);
         solenoid.set(false);
+     
    }
  } 
- public void resetEncoders(){
-    m_robotDrive.getLeftEncoder().reset();
-    m_robotDrive.getRightEncoder().reset();
-  
-
- }
  
  /* public Spark getSpark(int motor)
   {
@@ -203,48 +224,148 @@ public class Robot extends TimedRobot {
    * used for any initialization code.
    */  @Override
   public void robotInit() {
+    Thread m_visionThread;
+    
     if (tank){
       m_tTankDrive.initialize();
     }
     m_robotDrive.calibrate();
-    // Resets the encoders to read a distance of zero
-
+    
     m_chooser.setDefaultOption("Tank", tankOption);
     m_chooser.addOption("Arcade", arcade);
     SmartDashboard.putData("Driver choices", m_chooser);
+    // Resets the encoders to read a distance of zero
     resetEncoders();
     // speedStr = SmartDashboard.getString("Shooter Speed","0.7");
     SmartDashboard.putString("Shooter Speed", speedStr);
    //Basic Camera 
     //CameraServer.getInstance().startAutomaticCapture();
 
-   // Initializes a DigitalInput on DIO 4 and 5
-  //  initialConveyorSensor = new DigitalInput(4);
-  //  finalConveyorSensor = new DigitalInput(5);
+    //initialConveyorSensor = new DigitalInput(4);
+    //finalConveyerSensor = new DigitalInput(5);
+    IRSensor1 = new DigitalInput(7);
+    IRSensor2 = new DigitalInput(8);
 
     //Advanced Camera
     new Thread(() -> {
       UsbCamera camera = CameraServer.startAutomaticCapture();
       camera.setResolution(640, 480);
+      camera.setVideoMode(PixelFormat.kYUYV, 640, 480, 30);
 
       CvSink cvSink = CameraServer.getVideo();
       CvSource outputStream = CameraServer.putVideo("Blur", 640, 480);
+      CvSource outputStream2 = CameraServer.putVideo("Target", 640, 480);
 
       Mat source = new Mat();
-      Mat output = new Mat();
+      //Mat output = new Mat();
 
       while(!Thread.interrupted()) {
         if (cvSink.grabFrame(source) == 0) {
+          // Send the output the error.
+          outputStream.notifyError(cvSink.getError());
           continue;
         }
-        Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
-        outputStream.putFrame(output);
+        //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+        //outputStream.putFrame(output);
+        Mat processed = process(source);
+        outputStream.putFrame(source);
+        outputStream2.putFrame(processed);
+        
       }
     }).start();
-    
   }
 
+public static int varForTimer = 0;
+private static int screenCenterX = 317;
+private static int screenCenterY = 240;
+
+//screen size: x= 634, y =  480
+
+//measurement:
+private static double focalLength = 2*320.8; //focal length in pixels
+private static double ballRadius = 12.5;
+private static double distanceCameraToBall = 0;
+
+private static double depth = ballRadius;
+private static int robotDepth = 0;
+private static double cameraAngle = 90.0;//change this to another angle from flour
+private static double ballDistance;
+
+
+private Mat process(Mat frame) {
+  //Mat frame = frames.get(frames.size() - 1);
+  Mat frameHSV = new Mat();
+  Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
+  Mat thresh = new Mat();
   
+  //red color:
+ Core.inRange(frameHSV, new Scalar(0, 130, 130),
+         new Scalar(180, 240, 255), thresh);
+  
+  //blue color:
+  // Core.inRange(frameHSV, new Scalar(95, 50, 50),
+          // new Scalar(110, 255, 255), thresh);
+List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
+  Core.split(thresh, frames);
+  Mat gray = frames.get(0);
+  System.out.println("Test");
+//Default:
+//            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
+//                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
+
+  Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
+  
+
+  Imgproc.medianBlur(gray, gray, 5);
+  Mat circles = new Mat();    	        	  
+    
+  Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
+            2*(double)gray.rows(), // change this value to detect circles with different distances to each other
+            50.0, 30.0, 0, 0); // change the last two parameters
+                  // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
+  for (int x = 0; x < circles.cols(); x++) {
+    double[] c = circles.get(0, x);
+      Point center = new Point(Math.round(c[0]), Math.round(c[1]));
+              
+      int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
+      int cY = (int) Math.round(c[1]/5 - 1)*5;
+              
+      String coordinateXY = cX + "," + cY;
+              
+              // circle center
+      Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
+              // circle outline
+      int radius = (int) Math.round(c[2]);
+      Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
+              
+      Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
+        
+//                      Imgproc.putText(frame, text, coordinates, fontType, fontSize, color, thickness)
+              
+            //distance from camera to ball
+          distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
+          
+              //distance from robot to ball                      
+          ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
+          
+          String Dsize = "Distance: " + ballDistance + "cm";
+          int kat1 = cX-screenCenterX;
+          int kat2 = cY-screenCenterY;                      
+        
+          double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/5)*5;
+          double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
+          
+//						new Point(x, y) 
+          //showing angles and distance on the screen
+          String stringBallAngleX = ballAngleX + " X";
+          String stringBallAngleY =  ballAngleY + " Y "; 
+          Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
+          Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
+          Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
+    }
+    return frame;
+}
+
 
   /**
    * This function is called every robot packet, no matter the mode. Use
@@ -258,24 +379,24 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
       m_autoSelected = m_chooser.getSelected();
       speedStr = SmartDashboard.getString("Shooter Speed","0.7");
-      System.out.println("Drive: " + m_autoSelected);
-      System.out.println("Shooter Speed: " + speedStr);
+
+      // System.out.println("Drive: " + m_autoSelected);
+      // System.out.println("Shooter Speed: " + speedStr);
+      // SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
+      // SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
+      SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
       SmartDashboard.putNumber("LEncoder", Math.round(1000*m_robotDrive.getLeftEncoder().getDistance()));
       SmartDashboard.putNumber("REncoder", Math.round(1000*m_robotDrive.getRightEncoder().getDistance())); 
-       
-      SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
-      
-      //read values periodically
-      double x = tx.getDouble(0.0);
-      double y = ty.getDouble(0.0);
-      double area = ta.getDouble(0.0);
-      
-      //post to smart dashboard periodically
-      SmartDashboard.putNumber("LimelightX", x);
-      SmartDashboard.putNumber("LimelightY", y);
-      SmartDashboard.putNumber("LimelightArea", area);
-      // SmartDashboard.putBoolean("Conveyor Sensor In", initialConveyorSensor.get());
-      // SmartDashboard.putBoolean("Conveyor Sensor Out", finalConveyorSensor.get());
+      SmartDashboard.putNumber("Ball Distance", bD);
+      //SmartDashboard.putNumber("Ball Distance", vision.getDistance());
+      SmartDashboard.putBoolean("IR 1 Readings", IRSensor1.get());
+      SmartDashboard.putBoolean("IR 2 Readings", IRSensor2.get());  
+      double x = 1;
+      double y = 1;
+      bAngleX.setDouble(x);
+      bAngleY.setDouble(y);
+      bD.setDouble(ballDistance);
+            
       switch (m_autoSelected) {
          case tankOption:
            tank = true;
@@ -284,6 +405,12 @@ public class Robot extends TimedRobot {
            tank = false;
            break;
        }
+       
+       if (IRSensor1.get()==true || IRSensor2.get()==true)
+       {
+         runCANMechanism(conveyorMotor, 4, shootingPower, true);
+       }
+
     
   }
 
@@ -342,7 +469,7 @@ public class Robot extends TimedRobot {
     }
     shootingPower = Double.parseDouble(speedStr);
     // motor, button, power
-    // runCANMechanism(shooterMotor, 4, shootingPower, true);
+    runCANMechanism(shooterMotor, 4, shootingPower, true);
     runPneumaticCompressor(pcmCompressor, 2, true);
     runPneumaticSolenoid(firstSolenoidPCM, 3, true);
     //establishes minimum and maximums of deadzone
@@ -359,9 +486,9 @@ public class Robot extends TimedRobot {
     double xprime = Math.pow(x,3);
       // double xprime=x;
     double accelFactor = 2.0;
-    double slowFactor = 0.75;
+    double slowFactor = 0.85;
     //The % power used
-    final double turnLimit = 0.8;
+    final double turnLimit = 0.4;
     double speedLimit=0.5;
     final double leftAdj = 0;
     //Reports joystick numbers
@@ -399,8 +526,8 @@ public class Robot extends TimedRobot {
       xprime*=slowFactor; 
     }
     //Actual drive part
-    if (!tank && !m_stick.getRawButton(3)){
-       m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
+    if (!tank){
+      m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
     }
     double leftDistance = 1000*m_robotDrive.getLeftEncoder().getDistance();
     double rightDistance = 1000*m_robotDrive.getRightEncoder().getDistance();
@@ -428,8 +555,6 @@ public class Robot extends TimedRobot {
           m_robotDrive.arcadeDrive(0, 0);
         }}
   }
-  
-  
 
   /**
    * This function is called periodically during test mode.
