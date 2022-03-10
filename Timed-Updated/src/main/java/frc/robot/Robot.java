@@ -100,6 +100,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
  */
 
 public class Robot extends TimedRobot {
+
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
@@ -117,6 +118,7 @@ public class Robot extends TimedRobot {
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
   boolean prevState = false;
+  boolean driveModified = false;
   //private ThresholdInRange vision = new ThresholdInRange();
   //private DigitalInput initialConveyerSensor;
   //private DigitalInput finalConveyerSensor; 
@@ -136,12 +138,12 @@ public class Robot extends TimedRobot {
   // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
-  NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
-  NetworkTableEntry bD = table.getEntry("Ball Distance");
-  NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
-  NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
-  //  URI u = new URI("http://roborio-7230-frc.local:1181/");
-  //  URI v = new URI("http://10.72.30.2.1181/stream.mjpg");
+  // NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
+  // NetworkTableEntry bD = table.getEntry("Ball Distance");
+  // NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
+  // NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
+  // //  URI u = new URI("http://roborio-7230-frc.local:1181/");
+  // //  URI v = new URI("http://10.72.30.2.1181/stream.mjpg");
 
    RamseteIterative ramsete = new RamseteIterative(
        fp.getPath(),
@@ -276,8 +278,8 @@ public class Robot extends TimedRobot {
   }
 
 public static int varForTimer = 0;
-private static int screenCenterX = 317;
-private static int screenCenterY = 240;
+private static int screenCenterX = 160;
+private static int screenCenterY = 120;
 
 //screen size: x= 634, y =  480
 
@@ -289,12 +291,15 @@ private static double distanceCameraToBall = 0;
 private static double depth = ballRadius;
 private static int robotDepth = 0;
 private static double cameraAngle = 90.0;//change this to another angle from flour
-private static double ballDistance;
-
+public static double ballDistance;
+public static double ballAngleX;
+public static double ballAngleY;
 
 private Mat process(Mat frame) {
-  //Mat frame = frames.get(frames.size() - 1);
-  Mat frameHSV = new Mat();
+  
+  // SmartDashboard.putString("rr: ", "11");
+  // Mat frame = frames.get(frames.size() - 1);
+  Mat frameHSV = new Mat();  
   Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
   Mat thresh = new Mat();
   
@@ -308,7 +313,7 @@ private Mat process(Mat frame) {
 List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
   Core.split(thresh, frames);
   Mat gray = frames.get(0);
-  System.out.println("Test");
+  // System.out.println("Test");
 //Default:
 //            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
 //                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
@@ -348,22 +353,31 @@ List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
               //distance from robot to ball                      
           ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
           
-          String Dsize = "Distance: " + ballDistance + "cm";
+          // String Dsize = "Distance: " + ballDistance + "cm";
           int kat1 = cX-screenCenterX;
           int kat2 = cY-screenCenterY;                      
         
-          double ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/5)*5;
-          double ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
+          ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/5)*5;
+          ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
           
 //						new Point(x, y) 
           //showing angles and distance on the screen
+          // String stringBallAngleX = ballAngleX + " X";
+          // String stringBallAngleY =  ballAngleY + " Y "; 
+          // Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
           String stringBallAngleX = ballAngleX + " X";
           String stringBallAngleY =  ballAngleY + " Y "; 
-          Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
-          Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-          Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
-    }
-    return frame;
+          String Dsize = ballDistance + "cm";
+          SmartDashboard.putString("Distance to ball: ", Dsize);
+          SmartDashboard.putString("Angle X: ", stringBallAngleX);
+          // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
+          // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
+          
+          Imgproc.putText(frame, Dsize, new Point(10, 20), Imgproc.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 0), 1);	
+          // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
+          // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
+        }
+    return thresh;
 }
 
 
@@ -387,15 +401,16 @@ List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
       SmartDashboard.putNumber("LEncoder", Math.round(1000*m_robotDrive.getLeftEncoder().getDistance()));
       SmartDashboard.putNumber("REncoder", Math.round(1000*m_robotDrive.getRightEncoder().getDistance())); 
-      SmartDashboard.putNumber("Ball Distance", bD);
+      // SmartDashboard.putNumber("Ball Distance", bD);
+      // System.out.println("Distance: " + ballDistance);
       //SmartDashboard.putNumber("Ball Distance", vision.getDistance());
       SmartDashboard.putBoolean("IR 1 Readings", IRSensor1.get());
       SmartDashboard.putBoolean("IR 2 Readings", IRSensor2.get());  
-      double x = 1;
-      double y = 1;
-      bAngleX.setDouble(x);
-      bAngleY.setDouble(y);
-      bD.setDouble(ballDistance);
+      // double x = 1;
+      // double y = 1;
+      // bAngleX.setDouble(x);
+      // bAngleY.setDouble(y);
+      // bD.setDouble(ballDistance);
             
       switch (m_autoSelected) {
          case tankOption:
@@ -526,7 +541,7 @@ List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
       xprime*=slowFactor; 
     }
     //Actual drive part
-    if (!tank){
+    if (!tank && !driveModified){
       m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
     }
     double leftDistance = 1000*m_robotDrive.getLeftEncoder().getDistance();
@@ -536,7 +551,9 @@ List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
     int minimumEncoder = encoderTarget - error;
     int maximumEncoder = encoderTarget + error;
     boolean nowState = m_stick.getRawButton(3);
-    double speed = 0.65;
+    double speed = 0.75;
+    double margin = 5;
+    double angle = ballAngleX;
     if (prevState == false && nowState == true){
       
       resetEncoders();
@@ -544,16 +561,29 @@ List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
     prevState=m_stick.getRawButton(3);
     //replace the 100s with a rounded range for the encoder counts
 
-    if(nowState){
-        if(leftDistance < minimumEncoder && rightDistance > -minimumEncoder) {
+    // if(nowState){
+    //     if(leftDistance < minimumEncoder && rightDistance > -minimumEncoder) {
+    //       m_robotDrive.arcadeDrive(speed, 0);
+    //     }
+
+    //      else if (leftDistance > maximumEncoder && rightDistance < -maximumEncoder) {
+    //       m_robotDrive.arcadeDrive(-speed, 0);
+    //      } else {  
+    //       m_robotDrive.arcadeDrive(0, 0);
+    //     }}
+    if (nowState){
+        DriverStation.reportWarning("ANGLE: "+Double.toString(angle),true);
+        if (angle>0 && angle>margin){
+          driveModified = true;
+          DriverStation.reportWarning("buton",true);
+          m_robotDrive.arcadeDrive(-speed, 0);
+        }
+        else if (angle<0 && angle<margin){
+          driveModified = true;
+          DriverStation.reportWarning("buton",true);
           m_robotDrive.arcadeDrive(speed, 0);
         }
-
-         else if (leftDistance > maximumEncoder && rightDistance < -maximumEncoder) {
-          m_robotDrive.arcadeDrive(-speed, 0);
-         } else {  
-          m_robotDrive.arcadeDrive(0, 0);
-        }}
+      }
   }
 
   /**

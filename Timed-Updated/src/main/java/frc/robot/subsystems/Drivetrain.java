@@ -113,15 +113,15 @@ rangefinder = new AnalogInput(1);
     // Put methods for controlling this subsystem
     // here. Call these from Commands.
     
-    public void buttonTurn1() {
-        drive.tankDrive(.5, -.5);
-    }
-    public void buttonTurn2() {
-        drive.tankDrive(-.5, .5);
-    }
-    public void buttonTurn3() {
-        drive.tankDrive(0, 0);
-    }
+    // public void buttonTurn1() {
+    //     drive.tankDrive(.5, -.5);
+    // }
+    // public void buttonTurn2() {
+    //     drive.tankDrive(-.5, .5);
+    // }
+    // public void buttonTurn3() {
+    //     drive.tankDrive(0, 0);
+    // }
 
     public void drive(double left, double right) {
         drive.tankDrive(left, right);
