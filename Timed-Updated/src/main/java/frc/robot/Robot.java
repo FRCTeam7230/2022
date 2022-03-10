@@ -303,14 +303,19 @@ private Mat process(Mat frame) {
   Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
   Mat thresh = new Mat();
   
-  //red color:
- Core.inRange(frameHSV, new Scalar(0, 130, 130),
-         new Scalar(180, 240, 255), thresh);
+  //red color - need to change
+//  Core.inRange(frameHSV, new Scalar(0, 130, 130),
+//          new Scalar(180, 240, 255), thresh);
   
-  //blue color:
-  // Core.inRange(frameHSV, new Scalar(95, 50, 50),
-          // new Scalar(110, 255, 255), thresh);
-List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
+  //blue color - ok:
+  Core.inRange(frameHSV, new Scalar(95, 50, 0),
+          new Scalar(110, 255, 255), thresh);
+
+  //red color for test:
+  // Core.inRange(frameHSV, new Scalar(130, 50, 0),
+  //        new Scalar(200, 220, 255), thresh);
+
+List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
   Core.split(thresh, frames);
   Mat gray = frames.get(0);
   // System.out.println("Test");
@@ -329,6 +334,9 @@ List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
             50.0, 30.0, 0, 0); // change the last two parameters
                   // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
   for (int x = 0; x < circles.cols(); x++) {
+    // SmartDashboard.putString("TestA: ", "0");
+    // System.out.println("TestA");
+
     double[] c = circles.get(0, x);
       Point center = new Point(Math.round(c[0]), Math.round(c[1]));
               
@@ -355,7 +363,9 @@ List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
           
           // String Dsize = "Distance: " + ballDistance + "cm";
           int kat1 = cX-screenCenterX;
-          int kat2 = cY-screenCenterY;                      
+          int kat2 = cY-screenCenterY; 
+          // SmartDashboard.putString("TestB: ", "0");
+          // System.out.println("TestB");                     
         
           ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/5)*5;
           ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
@@ -396,8 +406,10 @@ List<Mat> frames = new LinkedList<Mat>();//new List<Mat>();
 
       // System.out.println("Drive: " + m_autoSelected);
       // System.out.println("Shooter Speed: " + speedStr);
-      // SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
-      // SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
+      // System.out.println("Distance: " + ballDistance);
+      // System.out.println("Angle: " + ballAngleX);
+      SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
+      SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
       SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
       SmartDashboard.putNumber("LEncoder", Math.round(1000*m_robotDrive.getLeftEncoder().getDistance()));
       SmartDashboard.putNumber("REncoder", Math.round(1000*m_robotDrive.getRightEncoder().getDistance())); 
