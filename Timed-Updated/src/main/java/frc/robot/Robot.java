@@ -416,12 +416,12 @@ private Mat process(Mat frame) {
   Mat thresh = new Mat();
   
   //red color - need to change
-//  Core.inRange(frameHSV, new Scalar(0, 130, 130),
-//          new Scalar(180, 240, 255), thresh);
+ Core.inRange(frameHSV, new Scalar(0, 130, 130),
+         new Scalar(180, 240, 255), thresh);
   
   //blue color - ok:
-  Core.inRange(frameHSV, new Scalar(95, 50, 0),
-          new Scalar(110, 255, 255), thresh);
+  // Core.inRange(frameHSV, new Scalar(95, 50, 0),
+  //         new Scalar(110, 255, 255), thresh);
 
   //red color for test:
   // Core.inRange(frameHSV, new Scalar(130, 50, 0),
@@ -435,9 +435,7 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
 //            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
 //                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
 
-  Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
-  
-
+  // Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
   Imgproc.medianBlur(gray, gray, 5);
   Mat circles = new Mat();    	        	  
     
@@ -450,26 +448,22 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
     // System.out.println("TestA");
 
     double[] c = circles.get(0, x);
-      Point center = new Point(Math.round(c[0]), Math.round(c[1]));
               
       int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
       int cY = (int) Math.round(c[1]/5 - 1)*5;
+      Point center = new Point(cX, cY);
+      int radius = (int) Math.round(c[2]);
               
       String coordinateXY = cX + "," + cY;
               
               // circle center
-      Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
+      // Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
               // circle outline
-      int radius = (int) Math.round(c[2]);
       Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
               
-      Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
-        
-//                      Imgproc.putText(frame, text, coordinates, fontType, fontSize, color, thickness)
-              
+      // Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);
             //distance from camera to ball
           distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
-          
               //distance from robot to ball                      
           ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
           
@@ -480,7 +474,7 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
           // System.out.println("TestB");                     
         
           ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/5)*5;
-          ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
+          // ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
           
 //						new Point(x, y) 
           //showing angles and distance on the screen
@@ -488,21 +482,21 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
           // String stringBallAngleY =  ballAngleY + " Y "; 
           // Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
           String stringBallAngleX = ballAngleX + " X";
-          String stringBallAngleY =  ballAngleY + " Y "; 
+          // String stringBallAngleY =  ballAngleY + " Y "; 
           String Dsize = ballDistance + "cm";
           SmartDashboard.putString("Distance to ball: ", Dsize);
           SmartDashboard.putString("Angle X: ", stringBallAngleX);
           // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
           // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
           
-          Imgproc.putText(frame, Dsize, new Point(10, 20), Imgproc.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 0), 1);	
+          // Imgproc.putText(frame, Dsize, new Point(10, 20), Imgproc.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 0), 1);	
           // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
           // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
         }
     return thresh;
 }
   /**
-   * This function is called every robot packet, no matter the mode. Use
+   * This functi on is called every robot packet, no matter the mode. Use
    * this for items like diagnostics that you want ran during disabled,
    * autonomous, teleoperated and test.
    *
@@ -602,7 +596,7 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
     // }
     firstActivated = true;
     if (firstActivated){
-      doneFirst = driveSetDistance(2, 0.7);
+      doneFirst = driveSetDistance(1.5, 0.7);
       firstActivated = false;
     }
     if(doneFirst) {
