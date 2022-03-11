@@ -105,17 +105,12 @@ public class Robot extends TimedRobot {
   private boolean tank = false;
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
-<<<<<<< Updated upstream
-
-  //private ThresholdInRange vision = new ThresholdInRange();
-=======
   private boolean prevState = false;
   private boolean prevState2 = false;
   private boolean driveModified = false;  
   private boolean firstActivated = true, secondActivated = true;
   private boolean doneFirst=false, doneSecond=false, doneThird = false;
   private ThresholdInRange vision = new ThresholdInRange();
->>>>>>> Stashed changes
   //private DigitalInput initialConveyerSensor;
   //private DigitalInput finalConveyerSensor; 
   private DigitalInput IRSensor1;
@@ -130,19 +125,15 @@ public class Robot extends TimedRobot {
   private CANSparkMax shooterMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
   private CANSparkMax conveyorMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-<<<<<<< Updated upstream
-  private Solenoid firstSolenoidPCM = new Solenoid(PneumaticsModuleType.CTREPCM, 3);
-=======
   private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
   
   
-  NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
-  NetworkTableEntry bD = table.getEntry("Ball Distance");
-  NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
-  NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
+  // NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
+  // NetworkTableEntry bD = table.getEntry("Ball Distance");
+  // NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
+  // NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
 
   private static Mat processed;
->>>>>>> Stashed changes
   // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
@@ -247,11 +238,7 @@ public class Robot extends TimedRobot {
     new Thread(() -> {
       UsbCamera camera = CameraServer.startAutomaticCapture();
       camera.setResolution(320, 240);
-<<<<<<< Updated upstream
-      camera.setVideoMode(PixelFormat.kYUYV, 320, 240, 15);
-=======
-      camera.setVideoMode(PixelFormat.kYUYV, 320, 240, 3);
->>>>>>> Stashed changes
+      camera.setVideoMode(PixelFormat.kYUYV, 320, 240, 5);
 
       CvSink cvSink = CameraServer.getVideo();
       CvSource outputStream = CameraServer.putVideo("Blur", 320, 240);
@@ -293,110 +280,6 @@ public class Robot extends TimedRobot {
     }).start();
   }
 
-<<<<<<< Updated upstream
-public static int varForTimer = 0;
-private static int screenCenterX = 160;
-private static int screenCenterY = 120;
-
-
-//screen size: x= 634, y =  480
-
-//measurement:
-private static double focalLength = 320.8; //focal length in pixels
-private static double ballRadius = 12.5;
-private static double distanceCameraToBall = 0;
-
-private static double depth = ballRadius;
-private static int robotDepth = 0;
-private static double cameraAngle = 90.0;//change this to another angle from flour
-public static double ballDistance;
-public static double ballAngleX;
-public static double ballAngleY;
-
-private Mat process(Mat frame) {
-  
-  // SmartDashboard.putString("rr: ", "11");
-  // Mat frame = frames.get(frames.size() - 1);
-  Mat frameHSV = new Mat();  
-
-  Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
-  Mat thresh = new Mat();
-  
-  //red color:
- Core.inRange(frameHSV, new Scalar(0, 130, 130),
-         new Scalar(180, 240, 255), thresh);
-  
-  //blue color:
-  // Core.inRange(frameHSV, new Scalar(95, 50, 50),
-          // new Scalar(110, 255, 255), thresh);
-List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
-  Core.split(thresh, frames);
-  Mat gray = frames.get(0);
-
-//Default:
-//            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
-//                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
-
-  // Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
-
-  Imgproc.medianBlur(gray, gray, 5);
-  Mat circles = new Mat();    	        	  
-          
-  Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
-            2*(double)gray.rows(), // change this value to detect circles with different distances to each other
-            50.0, 30.0, 0, 0); // change the last two parameters
-                  // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
-  for (int x = 0; x < circles.cols(); x++) {
-    // SmartDashboard.putString("TestA: ", "0");
-    // System.out.println("TestA");
-
-    double[] c = circles.get(0, x);
-    int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
-    int cY = (int) Math.round(c[1]/5 - 1)*5;
-    Point center = new Point(cX, cY);
-    int radius = (int) Math.round(c[2]);
-              
-      // String coordinateXY = cX + "," + cY;
-              
-              // circle center
-      Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
-              // circle outline
-      Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
-              
-      // Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);	
-        
-//                      Imgproc.putText(frame, text, coordinates, fontType, fontSize, color, thickness)
-              
-            //distance from camera to ball
-          distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
-            
-              //distance from robot to ball                      
-          ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
-
-          // String Dsize = ballDistance + "cm";
-          // SmartDashboard.putString("Cameraa", Dsize);
-          int kat1 = cX-screenCenterX;
-          // int kat2 = cY-screenCenterY; 
-          // SmartDashboard.putString("TestB: ", "0");
-          // System.out.println("TestB");                     
-        
-          ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/5)*5;
-          //ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
-
-//						new Point(x, y) 
-          //showing angles and distance on the screen
-
-          // String stringBallAngleX = ballAngleX + " X";
-          // String stringBallAngleY =  ballAngleY + " Y "; 
-          // Imgproc.putText(frame, Dsize, new Point(10, 20), Imgproc.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 0), 1);	
-          // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-          // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
-    }
-    
-    return thresh;
-}
-
-=======
   // private static int screenCenterX = 160;
   // private static int screenCenterY = 120;
   
@@ -492,7 +375,6 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
 //         }
 //     return thresh;
 // }
->>>>>>> Stashed changes
   /**
    * This function is called every robot packet, no matter the mode. Use
    * this for items like diagnostics that you want ran during disabled,
@@ -623,85 +505,3 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
       }
         break;
     }*/
-  }
-
-  /**
-   * This function is called periodically during operator control.
-   */
-  
-  @Override
-  public void teleopPeriodic() {
-    if (tank){
-    m_tTankDrive.execute();
-    }
-    shootingPower = Double.parseDouble(speedStr);
-    // motor, button, power
-    runCANMechanism(shooterMotor, 4, shootingPower, true);
-    runPneumaticCompressor(pcmCompressor, 2, true);
-    runPneumaticSolenoid(firstSolenoidPCM, 3, true);
-    //establishes minimum and maximums of deadzone
-    final double deadZone=0.4;
-    final double minZone=0.07;
-    final double invertAxis = 1;
-    final double xOffset = 0.0;
-    //positive xOffset goes right
-    //gets joystick values and creates curves
-    double y = m_stick.getRawAxis(1);
-    double yprime = invertAxis * Math.pow(y,3);
-      // double yprime=-y;
-    double x = m_stick.getRawAxis(2);
-    double xprime = Math.pow(x,3);
-      // double xprime=x;
-    double accelFactor = 2.0;
-    double slowFactor = 0.85;
-    //The % power used
-    final double turnLimit = 0.4;
-    double speedLimit=0.5;
-    final double leftAdj = 0;
-    //Reports joystick numbers
-    DriverStation.reportWarning("Raw Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
-    //Mathmomagic! For X and Y 
-    // Y is turn for now
-    if(minZone<Math.abs(yprime)){
-      // yprime=deadZone*Math.signum(yprime);
-        yprime=(Math.abs(yprime)/yprime)*(deadZone+speedLimit*(1-deadZone)*(Math.abs(yprime))/(0.9));
-        
-        // DriverStation.reportWarning("BANANA"+((Double)Math.abs(yprime)).toString(),true);
-    }
-    else{
-      yprime=0;
-    }
-    // X is throttle for now
-    if(minZone<Math.abs(xprime)){
-      xprime=Math.abs(xprime)/xprime*(deadZone+turnLimit*(1-deadZone)*(Math.abs(x)-0.1)/0.9);
-      // if (yprime<0){
-      //   yprime*=leftAdj;
-      // }
-        //DriverStation.reportWarning("KIWI"+((Double)Math.abs(xprime)).toString(),true);
-    }
-    else{
-      xprime=0;
-    }
-    DriverStation.reportWarning("New Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
-    // R Bumper is 6
-    if(m_stick.getRawButton(5)){
-      yprime*=accelFactor;
-    }
-    
-    if(m_stick.getRawButton(6)){
-      yprime*=slowFactor;
-      xprime*=slowFactor; 
-    }
-    //Actual drive part
-    if (!tank){
-      m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
-    }
-  }
-
-  /**
-   * This function is called periodically during test mode.
-   */
-  @Override
-  public void testPeriodic() {
-  }
-}
