@@ -5,6 +5,19 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+/**
+ * 
+ * HOW TO DRIVE
+ * LEFT JOYSTICK: FORWARD/BACKWARDS
+ * RIGHT JOYSTICK: LEFT/RIGHT
+ * LEFT TRIGGER(TOGGLE): SHOOT
+ * RIGHT TRIGGER(TOGGLE): INTAKE(MANUAL)
+ * LEFT BUMPER(TOGGLE): SPEED
+ * RIGHT BUMPER(TOGGLE): SLOW
+ * B(TOGGLE): AUTOMATIC INTAKE(BROKEN)
+ * Y(TAP): INVERT CONTROLS
+ * A(TOGGLE): CLIMB
+ */
 package frc.robot;
 
 import java.lang.Math;
@@ -59,6 +72,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // import frc.robot.subsystems.DriveSubsystem;
 import com.ctre.phoenix.motorcontrol.can.*;
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
 import com.revrobotics.CANSparkMax;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Solenoid;
@@ -95,8 +109,8 @@ public class Robot extends TimedRobot {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected, colorSelected;
-  private String speedStr = "0.6";
-  private double shootingPower = 0.6;
+  private String speedStr = "0.5";
+  private double shootingPower = 0.5;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private final SendableChooser<String> color_chooser = new SendableChooser<>();
   private Joystick m_stick = new Joystick(0);
@@ -113,11 +127,13 @@ public class Robot extends TimedRobot {
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
   private boolean prevState = false;
-  private boolean prevState2 = false;
+  private boolean prevState2 = false, swapState = false;
   private boolean driveModified = false;  
   private boolean firstActivated = true, secondActivated = true;
-  private boolean doneFirst=false, doneSecond=false, doneThird = false;
-  // private ThresholdInRange vision = new ThresholdInRange();
+  
+  double initialBallDistance;
+  private double invertAxis = -1;
+  private ThresholdInRange vision = new ThresholdInRange();
   //private DigitalInput initialConveyerSensor;
   //private DigitalInput finalConveyerSensor; 
   private DigitalInput IRSensor1;
@@ -130,6 +146,22 @@ public class Robot extends TimedRobot {
   1 - 4: driving motors
   5: shooter
   6: conveyor
+  7: intake
+  */
+  /*
+  Button mapping on Logitech: 
+  1: X
+  2: A
+  3: B
+  4: Y
+  5: left bumper
+  6: right bumper
+  7: left trigger
+  8: right trigger
+  9: back
+  10: start
+  11: L Joystick Press
+  12: R Joystick Press
   */
   // TODO: Change the ID of shooterMotor, or use different motor controllers
   private CANSparkMax shooterMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
@@ -137,8 +169,8 @@ public class Robot extends TimedRobot {
   private VictorSPX intakeMotor = new VictorSPX(7);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
-  
-  
+  private Solenoid climbSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 1);
+  // private CANSparkMax climbMotor = new CANSparkMax(8, CANSparkMax.MotorType.kBrushless);
   NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
   NetworkTableEntry bD = table.getEntry("Ball Distance");
   NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
@@ -277,7 +309,7 @@ public class Robot extends TimedRobot {
         conveyorMotor.set(0);
       }
       runPneumaticSolenoid(intakeSolenoid, button2, !enabled);
-      runSPXMechanism(intakeMotor, button2, 0.5, false);
+      runSPXMechanism(intakeMotor, button2, 0.65, false);
   }
 
   public boolean driveSetDistance(double distance, double speed){
@@ -336,9 +368,6 @@ public class Robot extends TimedRobot {
 
     //initialConveyorSensor = new DigitalInput(4);
     //finalConveyerSensor = new DigitalInput(5);  
-    IRSensor1 = new DigitalInput(7);
-    IRSensor2 = new DigitalInput(8);
-
     //Advanced Camera
     Thread m_visionThread;
     
@@ -362,144 +391,167 @@ public class Robot extends TimedRobot {
     // IRSensor2 = new DigitalInput(8);
 
     //Advanced Camera
-    new Thread(() -> {
-      UsbCamera camera = CameraServer.startAutomaticCapture();
-      camera.setResolution(320, 240);
-      camera.setVideoMode(PixelFormat.kYUYV, 320, 240, 10);
-
-      CvSink cvSink = CameraServer.getVideo();
-      CvSource outputStream = CameraServer.putVideo("Blur", 320, 240);
-      CvSource outputStream2 = CameraServer.putVideo("Target", 320, 240);
-
-      //Mat source = new Mat();
-      //Mat output = new Mat();
-
-      while(!Thread.interrupted()) {
-        if (cvSink.grabFrame(source) == 0) {
-          // Send the output the error.
-          outputStream.notifyError(cvSink.getError());
-          continue;
-        }
-        //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
-        //outputStream.putFrame(output);
-        Mat processed = process(source);
-        outputStream.putFrame(source);
-        outputStream2.putFrame(processed);
-        
-      }
-    }).start();
-  }
-
-
-  public static int varForTimer = 0;
-  private static int screenCenterX = 160;
-  private static int screenCenterY = 120;
-  
-  //screen size: x= 634, y =  480
-  
-  //measurement:
-  private static double focalLength = 320.8; //focal length in pixels
-  private static double ballRadius = 12.5;
-  private static double distanceCameraToBall = 0;
-  
-  private static double depth = ballRadius;
-  private static int robotDepth = 13;
-  private static double cameraAngle = 55.0;//change this to another angle from flour
-  public static double ballDistance;
-  public static double ballAngleX;
-  public static double ballAngleY;
-
-  private static Mat thresh = new Mat();
-  private static Mat frameHSV = new Mat();
-  private static Mat circles = new Mat();
-  private static Mat source = new Mat();
-  
-private Mat process(Mat frame) {
-  
-  // SmartDashboard.putString("rr: ", "11");
-  // Mat frame = frames.get(frames.size() - 1);
-  //Mat frameHSV = new Mat();  
-  Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
-  //Mat thresh = new Mat();
-  
-  //red color - need to change
-  if (red){
-  Core.inRange(frameHSV, new Scalar(0, 130, 130),
-         new Scalar(20, 240, 255), thresh);
-  }
-  else{
-  Core.inRange(frameHSV, new Scalar(95, 50, 0),
-          new Scalar(110, 255, 255), thresh);
-  }
-
-List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
-  Core.split(thresh, frames);
-  Mat gray = frames.get(0);
-  // System.out.println("Test");
-//Default:
-//            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
-//                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
-
-  // Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
-  Imgproc.medianBlur(gray, gray, 5);
-  //Mat circles = new Mat();    	        	  
+        //Advanced Camerat
+        new Thread(() -> {
+          UsbCamera camera = CameraServer.startAutomaticCapture();
+          camera.setResolution(320, 240);
+          camera.setVideoMode(PixelFormat.kYUYV, 320, 240, 5);
     
-  Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
-            2*(double)gray.rows(), // change this value to detect circles with different distances to each other
-            50.0, 30.0, 0, 0); // change the last two parameters
-                  // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
-  for (int x = 0; x < circles.cols(); x++) {
-    // SmartDashboard.putString("TestA: ", "0");
-    // System.out.println("TestA");
+          CvSink cvSink = CameraServer.getVideo();
+          CvSource outputStream = CameraServer.putVideo("Blur", 320, 240);
+          CvSource outputStream2 = CameraServer.putVideo("Target", 320, 240);
+    
+          Mat source = new Mat();
+          //Mat output = new Mat();
+          
+          while(!Thread.interrupted()) {
+            if (cvSink.grabFrame(source) == 0) {
+              // Send the output the error.
+              outputStream.notifyError(cvSink.getError());
+              continue;
+            }
+            // SmartDashboard.putString("temp", "1");
+            //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+            //outputStream.putFrame(output);
+            // System.out.println(red);
+            String tempColor;
+            if (red) {
+              tempColor = "red";
+            }
+            else {
+              tempColor = "blue";
+            }
+              // System.out.println(red);
+              Mat processed = vision.process(source, tempColor);
+            
+            // else {
+            //   Mat processed = vision.process(source, "blue");
+            // }
+            outputStream.putFrame(source);
+    
+    
+            // System.out.println("ddd"s);
+            // SmartDashboard.(processed);
+            outputStream2.putFrame(processed);
+          }
+        }).start();
+      }
+    
 
-    double[] c = circles.get(0, x);
+
+//   public static int varForTimer = 0;
+//   private static int screenCenterX = 160;
+//   private static int screenCenterY = 120;
+  
+//   //screen size: x= 634, y =  480
+  
+//   //measurement:
+//   private static double focalLength = 320.8; //focal length in pixels
+//   private static double ballRadius = 12.5;
+//   private static double distanceCameraToBall = 0;
+  
+//   private static double depth = ballRadius;
+//   private static int robotDepth = 13;
+//   private static double cameraAngle = 55.0;//change this to another angle from flour
+//   public static double ballDistance;
+//   public static double ballAngleX;
+//   public static double ballAngleY;
+
+//   private static Mat thresh = new Mat();
+//   private static Mat frameHSV = new Mat();
+//   private static Mat circles = new Mat();
+//   private static Mat source = new Mat();
+
+// private Mat process(Mat frame) {
+  
+//   // SmartDashboard.putString("rr: ", "11");
+//   // Mat frame = frames.get(frames.size() - 1);
+//   //Mat frameHSV = new Mat();  
+//   Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
+//   //Mat thresh = new Mat();
+  
+//   //red color - need to change
+//   if (red){
+//   Core.inRange(frameHSV, new Scalar(0, 130, 130),
+//          new Scalar(20, 240, 255), thresh);
+//   }
+//   else{
+//   Core.inRange(frameHSV, new Scalar(95, 50, 0),
+//           new Scalar(110, 255, 255), thresh);
+//   }
+
+// List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
+//   Core.split(thresh, frames);
+//   Mat gray = frames.get(0);
+//   // System.out.println("Test");
+// //Default:
+// //            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
+// //                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
+
+//   // Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
+//   Imgproc.medianBlur(gray, gray, 5);
+//   //Mat circles = new Mat();    	        	  
+    
+//   Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
+//             2*(double)gray.rows(), // change this value to detect circles with different distances to each other
+//             50.0, 30.0, 10, 0); // change the last two parameters
+//                   // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
+//   for (int x = 0; x < circles.cols(); x++) {
+//     // SmartDashboard.putString("TestA: ", "0");
+//     // System.out.println("TestA");
+
+//     double[] c = circles.get(0, x);
               
-      int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
-      int cY = (int) Math.round(c[1]/5 - 1)*5;
-      Point center = new Point(cX, cY);
-      int radius = (int) Math.round(c[2]);
+//       int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
+//       int cY = (int) Math.round(c[1]/5 - 1)*5;
+//       Point center = new Point(cX, cY);
+//       int radius = (int) Math.round(c[2]);
+//       // System.out.println(radius);
               
-      String coordinateXY = cX + "," + cY;
+//       String coordinateXY = cX + "," + cY;
               
-              // circle center
-      // Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
-              // circle outline
-      Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
+//               // circle center
+//       // Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
+//               // circle outline
+//       Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
               
-      // Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);
-            //distance from camera to ball
-          distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
-              //distance from robot to ball                      
-          ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
+//       // Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);
+//             //distance from camera to ball
+//           distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
+//               //distance from robot to ball                      
+//           ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
           
-          // String Dsize = "Distance: " + ballDistance + "cm";
-          int kat1 = cX-screenCenterX;
-          int kat2 = cY-screenCenterY; 
-          // SmartDashboard.putString("TestB: ", "0");
-          // System.out.println("TestB");                     
+//           // String Dsize = "Distance: " + ballDistance + "cm";
+//           int kat1 = cX-screenCenterX;
+//           int kat2 = cY-screenCenterY; 
+//           // SmartDashboard.putString("TestB: ", "0");
+//           // System.out.println("TestB");                     
         
-          ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/2)*2;
-          // ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
+//           ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/2)*2;
+//           // ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
           
-//						new Point(x, y) 
-          //showing angles and distance on the screen
-          // String stringBallAngleX = ballAngleX + " X";
-          // String stringBallAngleY =  ballAngleY + " Y "; 
-          // Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
-          // String stringBallAngleX = ballAngleX + " X";
-          // String stringBallAngleY =  ballAngleY + " Y "; 
-          // String Dsize = ballDistance + "cm";
-          // SmartDashboard.putString("Distance to ball: ", Dsize);
-          // SmartDashboard.putString("Angle X: ", stringBallAngleX);
-          // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-          // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
+// //						new Point(x, y) 
+//           //showing angles and distance on the screen
+//           // String stringBallAngleX = ballAngleX + " X";
+//           // String stringBallAngleY =  ballAngleY + " Y "; 
+//           // Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
+//           // String stringBallAngleX = ballAngleX + " X";
+//           // String stringBallAngleY =  ballAngleY + " Y "; 
+//           // String Dsize = ballDistance + "cm";
+//           // SmartDashboard.putString("Distance to ball: ", Dsize);
+//           // SmartDashboard.putString("Angle X: ", stringBallAngleX);
+//           // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
+//           // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
           
-          // Imgproc.putText(frame, Dsize, new Point(10, 20), Imgproc.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 0), 1);	
-          // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-          // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
-        }
-    return thresh;
-}
+//           // Imgproc.putText(frame, Dsize, new Point(10, 20), Imgproc.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 0), 1);	
+//           // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
+//           // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
+//         }
+//     return thresh;
+// }
+
+double ballDistance = vision.getDistance();
+double ballAngleX = vision.getAngleX();
   /**
    * This functi on is called every robot packet, no matter the mode. Use
    * this for items like diagnostics that you want ran during disabled,
@@ -527,8 +579,6 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
 
     SmartDashboard.putNumber("Ball Distance", ballDistance);
     SmartDashboard.putNumber("Angle X", ballAngleX);
-    SmartDashboard.putBoolean("IR 1 Readings", IRSensor1.get());
-    SmartDashboard.putBoolean("IR 2 Readings", IRSensor2.get());  
     double x = 1;
     double y = 1;
     bAngleX.setDouble(x);
@@ -552,10 +602,6 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
         red = false;
         break;
     }
-       if (IRSensor1.get()==true || IRSensor2.get()==true)
-       {
-        //  runCANMechanism(conveyorMotor, 4, shootingPower, true);
-       }
 
     
   }
@@ -620,7 +666,7 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
     }
     else if (autoState == "shoot"){
       if (m_timer.get()<2.0){
-        shooterMotor.set(0.65);
+        shooterMotor.set(shootingPower);
         conveyorMotor.set(0.7);
       }
       else {
@@ -640,6 +686,10 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
       // }
       if (m_timer.get()<2.0){
         m_robotDrive.arcadeDrive(0, -0.7);
+        intakeSolenoid.set(true);
+        intakeMotor.set(ControlMode.PercentOutput, 0.65);
+        conveyorMotor.set(0.5);
+        shooterMotor.set(-0.1);
       }
       else {
         autoState = "finished";
@@ -647,6 +697,10 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
     }
     else {//if (autoState == "finished")
       m_robotDrive.arcadeDrive(0, 0);
+      intakeSolenoid.set(false);
+      intakeMotor.set(ControlMode.PercentOutput, 0);
+      conveyorMotor.set(0.5);
+      shooterMotor.set(0);
       
     }
   }
@@ -659,8 +713,19 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
   public void teleopPeriodic() {
     if (tank){
     m_tTankDrive.execute();
-    }
+    } 
     shootingPower = Double.parseDouble(speedStr);
+    swapState = m_stick.getRawButton(4);
+    if(m_stick.getRawButton(1)){
+      climbSolenoid.set(true);
+      // System.out.println("FIRING CLIMB");
+      // climbMotor.set(0);
+    }
+    else{
+      climbSolenoid.set(false);
+      // climbMotor.set(0.7);
+    }
+    
     // runShotAndIntake(7,8, shootingPower, nowState);
     runShotAndIntake(7,8, shootingPower, nowState);
     // motor, button, power
@@ -671,13 +736,12 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
-    final double invertAxis = -1;
     final double xOffset = 0.0;
     //positive xOffset goes right
     //gets joystick values and creates curves
     nowState = m_stick.getRawButton(3);
     double y = m_stick.getRawAxis(1);
-    double yprime = invertAxis * Math.pow(y,3);
+    double yprime = Math.pow(y,3);
       // double yprime=-y;
     double x = m_stick.getRawAxis(2);
     double xprime = Math.pow(x,3);
@@ -728,42 +792,50 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
     yprime *= speedFactor;
     //Actual drive part
     if (!tank && !driveModified){
-      m_robotDrive.arcadeDrive(xprime+xOffset, yprime);
+      m_robotDrive.arcadeDrive(invertAxis * (xprime+xOffset), invertAxis *(yprime));
     }
   if (m_stick.getRawButton(10)){
     m_robotDrive.resetEncoders();
   }
-
   int encoderTarget = 20;
-  int error = 2;
-  // int minimumEncoder = encoderTarget - error;
-  // int maximumEncoder = encoderTarget + error;
-  
+  int error = 2;  
   double speed = 0.75;
   double margin = 5;
   double angle = ballAngleX;
   ballDistance*=0.01;
+  if (swapState == true && prevState2 == false){
+    invertAxis *= -1;
+    prevState2 = true;
+  }
+  else if (!swapState){
+    prevState2 = false;
+  }
   if (prevState == false && nowState == true){
     m_robotDrive.resetEncoders();
+    initialBallDistance = ballDistance;
   }
   prevState=m_stick.getRawButton(3);
   if (nowState){
       intakeSolenoid.set(nowState);
-      intakeMotor.set(ControlMode.PercentOutput, 0.5);
+      intakeMotor.set(ControlMode.PercentOutput, 0.65);
       // DriverStation.reportWarning("ANGLE: "+Double.toString(angle),true);
+      
       if (angle>0 && angle>margin){
         driveModified = true;
-        // DriverStation.reportWarning("buton",true);
-        m_robotDrive.arcadeDrive(speed, yprime);
+        DriverStation.reportWarning("angle>0",true);
+        // m_robotDrive.arcadeDrive(speed, yprime);
+        m_robotDrive.drive(speed/5, -speed);
       }
       else if (angle<0 && angle<margin){
         driveModified = true;
-        // DriverStation.reportWarning("buton",true);
-        m_robotDrive.arcadeDrive(-speed, yprime);
+        DriverStation.reportWarning("angle<0",true);
+        m_robotDrive.drive(-speed, speed/5);
+        // m_robotDrive.arcadeDrive(-speed, yprime);
       }
       else if (Math.abs(angle) < margin){
+        driveModified = true;
         m_robotDrive.resetEncoders();
-        if (leftEncoder<ballDistance && rightEncoder < ballDistance){
+        if (leftEncoder<initialBallDistance && rightEncoder < initialBallDistance){
           m_robotDrive.arcadeDrive(0, -speed);
         }
       }
@@ -772,6 +844,16 @@ List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
   else{
     driveModified = false;
   }
+
+  // if (angle>0 && angle>margin){
+  //   System.out.println("driving R");
+  // }
+  // else if (angle<0 && angle<margin){
+  //   System.out.println("driving L");
+  // }
+  // else if (Math.abs(angle) < margin){
+  //   System.out.println("driving F");
+  // }
 }
   /**
    * This function is called periodically during test mode.
