@@ -10,7 +10,21 @@
       "/LiveWindow/Ungrouped/PIDController[2]": "PIDController",
       "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
       "/LiveWindow/Ungrouped/navX-Sensor[4]": "Gyro",
+<<<<<<< Updated upstream
       "/SmartDashboard/Auto choices": "String Chooser"
+=======
+      "/SmartDashboard/Auto choices": "String Chooser",
+      "/SmartDashboard/Color choice": "String Chooser",
+      "/SmartDashboard/Driver choices": "String Chooser"
+>>>>>>> Stashed changes
+    }
+  },
+  "NetworkTables": {
+    "CameraPublisher": {
+      "open": true
+    },
+    "Circles": {
+      "open": true
     }
   }
 }
