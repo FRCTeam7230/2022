@@ -130,7 +130,7 @@ public class Robot extends TimedRobot {
   private boolean prevState2 = false, swapState = false;
   private boolean driveModified = false;  
   private boolean firstActivated = true, secondActivated = true;
-  
+  double ballDistance, ballAngleX;
   double initialBallDistance;
   private double invertAxis = -1;
   private ThresholdInRange vision = new ThresholdInRange();
@@ -549,9 +549,6 @@ public class Robot extends TimedRobot {
 //         }
 //     return thresh;
 // }
-
-double ballDistance = vision.getDistance();
-double ballAngleX = vision.getAngleX();
   /**
    * This functi on is called every robot packet, no matter the mode. Use
    * this for items like diagnostics that you want ran during disabled,
@@ -562,6 +559,9 @@ double ballAngleX = vision.getAngleX();
    */
   @Override
   public void robotPeriodic() {
+
+    ballDistance = vision.getDistance()*0.01;
+    ballAngleX = vision.getAngleX();
     
     m_autoSelected = m_chooser.getSelected();
     colorSelected = color_chooser.getSelected();
@@ -802,7 +802,7 @@ double ballAngleX = vision.getAngleX();
   double speed = 0.75;
   double margin = 5;
   double angle = ballAngleX;
-  ballDistance*=0.01;
+  // ballDistance*=0.01;
   if (swapState == true && prevState2 == false){
     invertAxis *= -1;
     prevState2 = true;
