@@ -42,14 +42,14 @@ public class ThresholdInRange {
     // private JLabel imgDetectionLabel;
     // private CaptureTask captureTask;
 
-    // private static Mat thresh = new Mat();
-    // private static Mat frameHSV = new Mat();
-    // private static Mat circles = new Mat();
+    private static Mat thresh = new Mat();
+    private static Mat frameHSV = new Mat();
+    private static Mat circles = new Mat();
     
     public Mat process(Mat frame, String color) {
-            Mat frameHSV = new Mat();  
+            // Mat frameHSV = new Mat();  
         Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
-        Mat thresh = new Mat();
+        // Mat thresh = new Mat();
         
         //red color - need to change
         if (color == "red"){
@@ -67,7 +67,7 @@ public class ThresholdInRange {
     
         // Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
         Imgproc.medianBlur(gray, gray, 5);
-        Mat circles = new Mat();    	        	  
+        // Mat circles = new Mat();    	        	  
         
         Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
                 2*(double)gray.rows(), // change this value to detect circles with different distances to each other
