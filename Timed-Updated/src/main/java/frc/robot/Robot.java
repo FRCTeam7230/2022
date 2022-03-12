@@ -95,6 +95,7 @@ import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import com.revrobotics.RelativeEncoder;
 // import java.io.IOException;
 // import java.nio.file.Paths;
 /**
@@ -109,13 +110,14 @@ public class Robot extends TimedRobot {
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected, colorSelected;
-  private String speedStr = "0.5";
-  private double shootingPower = 0.5;
+  private String speedStr = "0.6";
+  private double shootingPower = 0.6;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private final SendableChooser<String> color_chooser = new SendableChooser<>();
   private Joystick m_stick = new Joystick(0);
   private Timer m_timer = new Timer();
   private Timer c_timer = new Timer();
+  private int width = 160, height = 120;
   // Pathweaver related
   // private Drivetrain m_Drivetrain = new Drivetrain();
   private DriveSubsystem m_robotDrive = new DriveSubsystem();
@@ -175,6 +177,8 @@ public class Robot extends TimedRobot {
   NetworkTableEntry bD = table.getEntry("Ball Distance");
   NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
   NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
+  private RelativeEncoder shooterEncoder = shooterMotor.getEncoder();
+  
   // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
@@ -379,7 +383,7 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Arcade", arcade);
     m_chooser.addOption("Tank", tankOption);
     SmartDashboard.putData("Driver choices", m_chooser);
-    
+
     // speedStr = SmartDashboard.getString("Shooter Speed","0.7");
     SmartDashboard.putString("Shooter Speed", speedStr);
    //Basic Camera 
@@ -394,12 +398,12 @@ public class Robot extends TimedRobot {
         //Advanced Camerat
         new Thread(() -> {
           UsbCamera camera = CameraServer.startAutomaticCapture();
-          camera.setResolution(320, 240);
-          camera.setVideoMode(PixelFormat.kYUYV, 320, 240, 5);
+          camera.setResolution(width, height);
+          camera.setVideoMode(PixelFormat.kYUYV, width, height, 10);
     
           CvSink cvSink = CameraServer.getVideo();
-          CvSource outputStream = CameraServer.putVideo("Blur", 320, 240);
-          CvSource outputStream2 = CameraServer.putVideo("Target", 320, 240);
+          CvSource outputStream = CameraServer.putVideo("Blur", width, height);
+          CvSource outputStream2 = CameraServer.putVideo("Target", width, height);
     
           Mat source = new Mat();
           //Mat output = new Mat();
@@ -498,7 +502,7 @@ public class Robot extends TimedRobot {
 //                   // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
 //   for (int x = 0; x < circles.cols(); x++) {
 //     // SmartDashboard.putString("TestA: ", "0");
-//     // System.out.println("TestA");
+//     // System.out.println("TestA");.
 
 //     double[] c = circles.get(0, x);
               
@@ -579,6 +583,7 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putNumber("Ball Distance", ballDistance);
     SmartDashboard.putNumber("Angle X", ballAngleX);
+    SmartDashboard.putNumber("Shooting Velocity", shooterEncoder.getVelocity());
     double x = 1;
     double y = 1;
     bAngleX.setDouble(x);
@@ -673,6 +678,7 @@ public class Robot extends TimedRobot {
         m_timer.reset();
         m_timer.start();
         shooterMotor.set(0);
+
         conveyorMotor.set(0);
         m_robotDrive.resetEncoders();
         autoState = "secondDrive";
@@ -692,9 +698,47 @@ public class Robot extends TimedRobot {
         shooterMotor.set(-0.1);
       }
       else {
+        m_timer.reset();
+        m_timer.start();
+        intakeSolenoid.set(false);
+        intakeMotor.set(ControlMode.PercentOutput, 0);
+        conveyorMotor.set(0);
+        shooterMotor.set(0);
         autoState = "finished";
       }
     }
+    // else if (autoState == "thirdDrive"){
+    //   // intakeSolenoid.set(true);
+    //   // intakeMotor.set(ControlMode.PercentOutput, 0.7);
+    //   // if (driveSetDistance(-1.3, -0.7) == true){
+    //   //   autoState = "finished";
+    //   // }
+    //   if (m_timer.get()<2.0){
+    //     m_robotDrive.arcadeDrive(0, 0.7);
+    //     conveyorMotor.set(0.5);
+    //     shooterMotor.set(-0.1);
+    //   }
+    //   else {
+    //     m_timer.reset();
+    //     m_timer.start();
+    //     m_robotDrive.arcadeDrive(0, 0);
+    //     autoState = "shoot2";
+    //   }
+    // }
+    // else if (autoState == "shoot"){
+    //   if (1.0< m_timer.get() && m_timer.get()<3.0){
+    //     shooterMotor.set(shootingPower);
+    //     conveyorMotor.set(0.7);
+    //   }
+    //   else {
+    //     m_timer.reset();
+    //     m_timer.start();
+    //     shooterMotor.set(0);
+    //     conveyorMotor.set(0);
+    //     m_robotDrive.resetEncoders();
+    //     autoState = "finished";
+    //   }
+    // }
     else {//if (autoState == "finished")
       m_robotDrive.arcadeDrive(0, 0);
       intakeSolenoid.set(false);
@@ -757,17 +801,15 @@ public class Robot extends TimedRobot {
     //Reports joystick numbers
     // DriverStation.reportWarning("Raw Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
     //Mathmomagic! For X and Y 
-    // Y is turn for now
     if(minZone<Math.abs(yprime)){
       // yprime=deadZone*Math.signum(yprime);
-        yprime=(Math.abs(yprime)/yprime)*(deadZone+speedLimit*(1-deadZone)*(Math.abs(yprime))/(0.9));
+        yprime=(Math.abs(yprime)/yprime)*(deadZone+speedLimit*(1-deadZone)*(Math.abs(yprime)+deadZone)/(1))-deadZone/4;
         
         // DriverStation.reportWarning("BANANA"+((Double)Math.abs(yprime)).toString(),true);
     }
     else{
       yprime=0;
     }
-    // X is throttle for now
     if(minZone<Math.abs(xprime)){
       xprime=Math.abs(xprime)/xprime*(deadZone+turnLimit*(1-deadZone)*(Math.abs(x)-0.1)/0.9);
       // if (yprime<0){
@@ -797,10 +839,8 @@ public class Robot extends TimedRobot {
   if (m_stick.getRawButton(10)){
     m_robotDrive.resetEncoders();
   }
-  int encoderTarget = 20;
-  int error = 2;  
-  double speed = 0.75;
-  double margin = 5;
+  double speed = 0.7;
+  double margin = 3;
   double angle = ballAngleX;
   // ballDistance*=0.01;
   if (swapState == true && prevState2 == false){
@@ -818,25 +858,26 @@ public class Robot extends TimedRobot {
   if (nowState){
       intakeSolenoid.set(nowState);
       intakeMotor.set(ControlMode.PercentOutput, 0.65);
+      conveyorMotor.set(0.5);
       // DriverStation.reportWarning("ANGLE: "+Double.toString(angle),true);
       
       if (angle>0 && angle>margin){
         driveModified = true;
         DriverStation.reportWarning("angle>0",true);
         // m_robotDrive.arcadeDrive(speed, yprime);
-        m_robotDrive.drive(speed/5, -speed);
+        m_robotDrive.drive(-speed/2, speed/4);
       }
-      else if (angle<0 && angle<margin){
+      else if (angle<0 && angle<-margin){
         driveModified = true;
         DriverStation.reportWarning("angle<0",true);
-        m_robotDrive.drive(-speed, speed/5);
+        m_robotDrive.drive(speed/4, -speed/2);
         // m_robotDrive.arcadeDrive(-speed, yprime);
       }
       else if (Math.abs(angle) < margin){
         driveModified = true;
         m_robotDrive.resetEncoders();
         if (leftEncoder<initialBallDistance && rightEncoder < initialBallDistance){
-          m_robotDrive.arcadeDrive(0, -speed);
+          m_robotDrive.arcadeDrive(0, -speed/2);
         }
       }
   

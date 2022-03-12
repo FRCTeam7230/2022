@@ -8,13 +8,8 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkMaxRelativeEncoder;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import edu.wpi.first.wpilibj.Encoder;
-//import edu.wpi.first.wpilibj.motorcontrol.PWMVictorSPX;
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -25,8 +20,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import frc.robot.Constants.DriveConstants;
-import com.kauailabs.navx.frc.AHRS;
-import com.revrobotics.CANSparkMax; 
+import com.kauailabs.navx.frc.AHRS; 
 //import frc.robot.Robot;
 //import frc.robot.Robot;
 public class DriveSubsystem extends SubsystemBase {

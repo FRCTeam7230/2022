@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import edu.wpi.first.cameraserver.CameraServer;
 
 public class ThresholdInRange {   
-    private static int screenCenterX = 160;
-    private static int screenCenterY = 120;
+    private static int screenCenterX = 80;
+    private static int screenCenterY = 60;
     //screen size: x= 634, y =  480
     
     //measurement:
@@ -53,8 +53,8 @@ public class ThresholdInRange {
         
         //red color - need to change
         if (color == "red"){
-            Core.inRange(frameHSV, new Scalar(0, 130, 130),
-                new Scalar(20, 240, 255), thresh);
+            Core.inRange(frameHSV, new Scalar(0, 70, 70),
+                new Scalar(10, 255, 255), thresh);
         }
         else{
             Core.inRange(frameHSV, new Scalar(95, 50, 0),
@@ -71,7 +71,7 @@ public class ThresholdInRange {
         
         Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
                 2*(double)gray.rows(), // change this value to detect circles with different distances to each other
-                50.0, 30.0, 20, 0); // change the last two parameters
+                50.0, 30.0, 10, 0); // change the last two parameters
                         // (m2in_radius & max_radius) to detect larger circles - need to change min radius to normal values
     
         for (int x = 0; x < circles.cols(); x++) {
@@ -87,7 +87,7 @@ public class ThresholdInRange {
                     // circle center
             // Imgproc.circle(frame, new Point(cX, cY), 1, new Scalar(0,255,100), 3, 8, 0);
                     // circle outline
-            Imgproc.circle(frame, new Point(cX, cY), radius, new Scalar(255,0,255), 3, 8, 0);
+            Imgproc.circle(frame, new Point(cX, cY), radius, new Scalar(255,0,255), 2, 8, 0);
                     
             // Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);
                 //distance from camera to ball
