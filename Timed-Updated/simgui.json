@@ -18,5 +18,10 @@
       "/SmartDashboard/Color choice": "String Chooser",
       "/SmartDashboard/Driver choices": "String Chooser"
     }
+  },
+  "NetworkTables": {
+    "SmartDashboard": {
+      "open": true
+    }
   }
 }

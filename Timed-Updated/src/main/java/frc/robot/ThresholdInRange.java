@@ -1,23 +1,12 @@
-
 package frc.robot;
-import org.opencv.core.*;
 
 import org.opencv.core.Point;
-import org.opencv.highgui.HighGui;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-
 import java.util.List;
-
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
-import org.opencv.videoio.VideoCapture;
-
 import java.util.ArrayList;
-
-
-import edu.wpi.first.cameraserver.CameraServer;
 
 public class ThresholdInRange {   
     private static int screenCenterX = 80;
@@ -31,28 +20,19 @@ public class ThresholdInRange {
     
     private static double depth = ballRadius;
     private static int robotDepth = 13;
-    private static double cameraAngle = 55.0;//change this to another angle from flour
+    private static double cameraAngle = 55.0;//change this to another angle from floor
     public static double ballDistance;
     public static double ballAngleX, ballAngleY;
-    
-    // private VideoCapture cap;
-    // private Mat matFrame = new Mat();
-    // private JFrame frame;
-    // private JLabel imgCaptureLabel;
-    // private JLabel imgDetectionLabel;
-    // private CaptureTask captureTask;
 
     private static Mat thresh = new Mat();
     private static Mat frameHSV = new Mat();
     private static Mat circles = new Mat();
     
     public Mat process(Mat frame, String color) {
-            // Mat frameHSV = new Mat();  
         Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
-        // Mat thresh = new Mat();
         
         //red color - need to change
-        if (color == "red"){
+        if (color == "red"){ //setting red or blue color
             Core.inRange(frameHSV, new Scalar(0, 70, 70),
                 new Scalar(10, 255, 255), thresh);
         }
@@ -61,13 +41,12 @@ public class ThresholdInRange {
                     new Scalar(110, 255, 255), thresh);
         }
     
-    List<Mat> frames = new ArrayList<Mat>(); //new List<Mat>();
+    List<Mat> frames = new ArrayList<Mat>(); 
         Core.split(thresh, frames);
         Mat gray = frames.get(0);
     
         // Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
         Imgproc.medianBlur(gray, gray, 5);
-        // Mat circles = new Mat();    	        	  
         
         Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
                 2*(double)gray.rows(), // change this value to detect circles with different distances to each other
@@ -81,15 +60,12 @@ public class ThresholdInRange {
             int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
             int cY = (int) Math.round(c[1]/5 - 1)*5;
             int radius = (int) Math.round(c[2]);
-                    
-            // String coordinateXY = cX + "," + cY;
-                    
+                                        
                     // circle center
             // Imgproc.circle(frame, new Point(cX, cY), 1, new Scalar(0,255,100), 3, 8, 0);
                     // circle outline
             Imgproc.circle(frame, new Point(cX, cY), radius, new Scalar(255,0,255), 2, 8, 0);
                     
-            // Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);
                 //distance from camera to ball
                 distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
                     //distance from robot to ball                      
@@ -105,7 +81,7 @@ public class ThresholdInRange {
                 // String stringBallAngleX = ballAngleX + " X";
                 // String stringBallAngleY =  ballAngleY + " Y "; 
                 
-                // Imgproc.putText(frame, Dsize, new Point(10, 20), Imgproc.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 0), 1);	
+                // Showing data on screen
                 // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
                 // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
             }
