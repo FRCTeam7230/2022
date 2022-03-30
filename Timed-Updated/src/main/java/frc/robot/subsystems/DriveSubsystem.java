@@ -10,6 +10,7 @@ package frc.robot.subsystems;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkMaxRelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -34,10 +35,15 @@ public class DriveSubsystem extends SubsystemBase {
   public CANSparkMax r_motor1 = new CANSparkMax(3, CANSparkMax.MotorType.kBrushless);
   public CANSparkMax l_motor2 = new CANSparkMax(2, CANSparkMax.MotorType.kBrushless);
   public CANSparkMax r_motor2 = new CANSparkMax(4, CANSparkMax.MotorType.kBrushless);
+  // public SparkMaxPIDController lController1 = l_motor1.getPIDController();
+  // public SparkMaxPIDController rController1 = r_motor1.getPIDController();
+  // public SparkMaxPIDController lController2 = l_motor2.getPIDController();
+  // public SparkMaxPIDController rController2 = r_motor2.getPIDController();
   // The motors on the left side of the drive.
   // private final SpeedControllerGroup m_leftMotors =
   // new SpeedControllerGroup(l_motor1,
   //                          l_motor2);
+  private int maxAccel;
   private final MotorControllerGroup m_leftMotors =
       new MotorControllerGroup(l_motor1,
                                l_motor2);
@@ -80,6 +86,14 @@ public class DriveSubsystem extends SubsystemBase {
     // r_motor1.setInverted(true);
     initialLeft = m_leftEncoder.getPosition();
     initialRight = m_rightEncoder.getPosition();
+    // lController1.setSmartMotionMaxAccel(maxAccel, 0);
+    // rController1.setSmartMotionMaxAccel(maxAccel, 0);
+    // lController2.setSmartMotionMaxAccel(maxAccel, 0);
+    // rController2.setSmartMotionMaxAccel(maxAccel, 0);
+    // l_motor1.setSmartCurrentLimit(20);
+    // l_motor2.setSmartCurrentLimit(20);
+    // r_motor1.setSmartCurrentLimit(20);
+    // r_motor2.setSmartCurrentLimit(20);
     m_drive.setSafetyEnabled(false);
     // resetEncoders();
     m_odometry = new DifferentialDriveOdometry(Rotation2d.fromDegrees(getHeading()));
@@ -228,4 +242,5 @@ public class DriveSubsystem extends SubsystemBase {
   public double getTurnRate() {
     return m_gyro.getRate() * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
   }
+  
 }

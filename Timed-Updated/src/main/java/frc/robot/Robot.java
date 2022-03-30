@@ -51,7 +51,8 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.TankDrive;
 // import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
-
+import frc.robot.Autonomous;
+import frc.robot.Mechanisms;
 // import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 // import java.io.*;
 //import java.util.List;
@@ -107,42 +108,35 @@ import com.revrobotics.RelativeEncoder;
  */
 
 public class Robot extends TimedRobot {
-  private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
   private String m_autoSelected, colorSelected;
   private String speedStr = "0.6";
   private double shootingPower = 0.6;
+  private String climbStr = "0.5";
+  private double climbPower = 0.5;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private final SendableChooser<String> color_chooser = new SendableChooser<>();
   private Joystick m_stick = new Joystick(0);
-  private Timer m_timer = new Timer();
-  private Timer c_timer = new Timer();
   private int width = 160, height = 120;
+  private String statusString = "not Running";
   // Pathweaver related
   // private Drivetrain m_Drivetrain = new Drivetrain();
-  private DriveSubsystem m_robotDrive = new DriveSubsystem();
+  public DriveSubsystem m_robotDrive = new DriveSubsystem();
   // Speed/turn adjustments in the TankDrive.java file
   private TankDrive m_tTankDrive = new TankDrive(m_robotDrive);
   private FindPath pathOne = new FindPath("/home/lvuser/deploy/paths/Path1.wpilib.json");
-  private FindPath pathTwo = new FindPath("/home/lvuser/deploy/paths/Path2.wpilib.json");
   private boolean tank = false, red = true;
   private static final String arcade = "arcad";
   private static final String tankOption = "tank mod";
   private boolean prevState = false;
   private boolean prevState2 = false, swapState = false;
   private boolean driveModified = false;  
-  private boolean firstActivated = true, secondActivated = true;
   double ballDistance, ballAngleX;
   double initialBallDistance;
   private double invertAxis = -1;
   private ThresholdInRange vision = new ThresholdInRange();
-  //private DigitalInput initialConveyerSensor;
-  //private DigitalInput finalConveyerSensor; 
-  private DigitalInput IRSensor1;
-  private DigitalInput IRSensor2;
-  private boolean resetBool, nowState;
-  private double leftEncoder, rightEncoder;
-  private String autoState;
+  private Autonomous auton = new Autonomous();
+  private boolean nowState;
+  public static double leftEncoder, rightEncoder;
   /*
   * CAN IDS:
   1 - 4: driving motors
@@ -172,7 +166,7 @@ public class Robot extends TimedRobot {
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
   private Solenoid climbSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 1);
-  // private CANSparkMax climbMotor = new CANSparkMax(8, CANSparkMax.MotorType.kBrushless);
+  private CANSparkMax climbMotor = new CANSparkMax(8, CANSparkMax.MotorType.kBrushless);
   NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
   NetworkTableEntry bD = table.getEntry("Ball Distance");
   NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
@@ -198,156 +192,7 @@ public class Robot extends TimedRobot {
        // RamseteCommand passes volts to the callback
        m_robotDrive::tankDriveVolts
    );
-   RamseteIterative ramsete2 = new RamseteIterative(
-       pathTwo.getPath(),
-       m_robotDrive::getPose,
-       new RamseteController(AutoConstants.kRamseteB, AutoConstants.kRamseteZeta),
-       new SimpleMotorFeedforward(DriveConstants.ksVolts,
-                                  DriveConstants.kvVoltSecondsPerMeter,
-                                  DriveConstants.kaVoltSecondsSquaredPerMeter),
-       DriveConstants.kDriveKinematics,
-       m_robotDrive::getWheelSpeeds,
-       new PIDController(DriveConstants.kPDriveVel, 0, 0),
-       new PIDController(DriveConstants.kPDriveVel, 0, 0),
-       // RamseteCommand passes volts to the callback
-       m_robotDrive::tankDriveVolts
-   );
-
-   public void runCANMechanism(CANSparkMax motor, int button, double power, boolean invert, double offPower){
-    // boolean previousState = false;
-    boolean state = m_stick.getRawButton(button); 
-    double newPower = power;
-     if (invert){
-       newPower*=-1;
-     }
-    //  if (state && !previousState){
-    //    motor.set(-offPower);
-    //  }
-    //  previousState = state;
-     if(state){
-        //  DriverStation.reportWarning("running button "+button+"fwd",true);
-         motor.set(newPower);
-     }
-     else{
-       motor.set(-offPower);
-     }
-     
-   } 
-
-   public void runSPXMechanism(VictorSPX motor, int button, double power, boolean invert){
-    double newPower = power;
-    if (invert){
-      newPower*=-1;
-    }
-    if(m_stick.getRawButton(button)){
-        // DriverStation.reportWarning("running spxbutton "+button+"fwd",true);
-        motor.set(ControlMode.PercentOutput,newPower);
-    }
-    else{
-      motor.set(ControlMode.PercentOutput,0);
-    }
-  } 
-
-   public void runPneumaticCompressor(Compressor comp, int button, boolean enabled){
-    if(m_stick.getRawButton(button)){
-        // DriverStation.reportWarning("running compressor",true);
-        comp.enableDigital();
-
-    }
-    else{
-      // DriverStation.reportWarning("compressor off",true);
-      comp.disable();
-    }
-  } 
-  public void runPneumaticSolenoid(Solenoid solenoid, int button, boolean enabled){
-   if(m_stick.getRawButton(button) && enabled){
-        // DriverStation.reportWarning("running solenoid",true);
-        solenoid.set(true);
-
-   }
-   else if (enabled){
-        // DriverStation.reportWarning("solenoid off",true);
-        solenoid.set(false);
-     
-   }
- } 
-  public void runClimber(int button, double speed, CANSparkMax motor, Solenoid solenoid){
-    c_timer.reset();
-    c_timer.start();
-    if (m_timer.get() < 4.0){
-      solenoid.set(true);
-      if (m_timer.get()>1.0){
-        motor.set(speed);
-      }
-    }
-    if (m_timer.get() > 4.0 && m_timer.get() < 8.0){
-      solenoid.set(false);
-      if (m_timer.get()>5.0 && m_timer.get() < 8.0){
-        motor.set(speed);
-      }
-    }
-    
-  }
-// button1 = shoot, button2 = intake
-  public void runShotAndIntake(int button1, int button2, double power, boolean enabled){
-    boolean state1 = m_stick.getRawButton(button1);
-    boolean state2 = m_stick.getRawButton(button2); 
-      double newPower = power;
-      //  if (state && !previousState){
-      //    motor.set(-offPower);
-      //  }
-      //  previousState = state;
-      if(state1){
-        // DriverStation.reportWarning("running button "+button1+"fwd",true);
-        shooterMotor.set(newPower);
-        conveyorMotor.set(0.5);
-      }
-      else{
-        shooterMotor.set(-newPower/10);
-      }
-      if(state2){
-          // DriverStation.reportWarning("running button "+button2+"fwd",true);
-          conveyorMotor.set(0.5);
-      }
-      if (!state1 && !state2){
-        conveyorMotor.set(0);
-      }
-      runPneumaticSolenoid(intakeSolenoid, button2, !enabled);
-      runSPXMechanism(intakeMotor, button2, 0.65, false);
-  }
-
-  public boolean driveSetDistance(double distance, double speed){
-    boolean finished = false;
-    if (Math.abs(leftEncoder)<Math.abs(distance) && Math.abs(rightEncoder) < Math.abs(distance)){
-      m_robotDrive.arcadeDrive(0, speed);
-      // DriverStation.reportWarning(Double.toString(leftEncoder) + ", "+ Double.toString(distance), true);
-      
-    }
-    else {
-      finished = true;
-    }
-    return finished;
-  }
-// intakeMotor.set(ControlMode.PercentOutput, 0.4)
- /* public Spark getSpark(int motor)
-  {
-    switch(motor)
-    {
-      case 0:
-        return l_motor1;
-      case 1:
-        return r_motor1;
-      case 2:
-        return l_motor2;
-      default:
-        return r_motor2;
-      
-    }
-  }*/
- // DifferentialDrive flywheel = new DifferentialDrive(l_flywheel, r_flywheel);
-
-//  RamseteCommand c; 
-
+   
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
@@ -366,193 +211,53 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Color choice", color_chooser);
     
     // speedStr = SmartDashboard.getString("Shooter Speed","0.7");
-    SmartDashboard.putString("Shooter Speed", speedStr);
-   //Basic Camera 
-    //CameraServer.getInstance().startAutomaticCapture();
+    SmartDashboard.putString("Shooter Adjustment", speedStr);
+    SmartDashboard.putString("Climb Adjustment", climbStr);
+    SmartDashboard.putNumber("Shooter Speed", shooterEncoder.getVelocity());
+    new Thread(() -> {
+      UsbCamera camera = CameraServer.startAutomaticCapture();
+      camera.setResolution(width, height);
+      camera.setVideoMode(PixelFormat.kYUYV, width, height, 10);
 
-    //initialConveyorSensor = new DigitalInput(4);
-    //finalConveyerSensor = new DigitalInput(5);  
-    //Advanced Camera
-    Thread m_visionThread;
-    
-    if (tank){
-      m_tTankDrive.initialize();
-    }
-    m_robotDrive.calibrate();
-    m_robotDrive.resetEncoders();
-    m_chooser.setDefaultOption("Arcade", arcade);
-    m_chooser.addOption("Tank", tankOption);
-    SmartDashboard.putData("Driver choices", m_chooser);
+      CvSink cvSink = CameraServer.getVideo();
+      CvSource outputStream = CameraServer.putVideo("Blur", width, height);
+      CvSource outputStream2 = CameraServer.putVideo("Target", width, height);
 
-    // speedStr = SmartDashboard.getString("Shooter Speed","0.7");
-    SmartDashboard.putString("Shooter Speed", speedStr);
-   //Basic Camera 
-    //CameraServer.getInstance().startAutomaticCapture();
-
-    //initialConveyorSensor = new DigitalInput(4);
-    //finalConveyerSensor = new DigitalInput(5);
-    // IRSensor1 = new DigitalInput(7);
-    // IRSensor2 = new DigitalInput(8);
-
-    //Advanced Camera
-        //Advanced Camerat
-        new Thread(() -> {
-          UsbCamera camera = CameraServer.startAutomaticCapture();
-          camera.setResolution(width, height);
-          camera.setVideoMode(PixelFormat.kYUYV, width, height, 10);
-    
-          CvSink cvSink = CameraServer.getVideo();
-          CvSource outputStream = CameraServer.putVideo("Blur", width, height);
-          CvSource outputStream2 = CameraServer.putVideo("Target", width, height);
-    
-          Mat source = new Mat();
-          //Mat output = new Mat();
-          
-          while(!Thread.interrupted()) {
-            if (cvSink.grabFrame(source) == 0) {
-              // Send the output the error.
-              outputStream.notifyError(cvSink.getError());
-              continue;
-            }
-            // SmartDashboard.putString("temp", "1");
-            //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
-            //outputStream.putFrame(output);
-            // System.out.println(red);
-            String tempColor;
-            if (red) {
-              tempColor = "red";
-            }
-            else {
-              tempColor = "blue";
-            }
-              // System.out.println(red);
-              Mat processed = vision.process(source, tempColor);
-            
-            // else {
-            //   Mat processed = vision.process(source, "blue");
-            // }
-            outputStream.putFrame(source);
-    
-    
-            // System.out.println("ddd"s);
-            // SmartDashboard.(processed);
-            outputStream2.putFrame(processed);
-          }
-        }).start();
-      }
-    
-
-
-//   public static int varForTimer = 0;
-//   private static int screenCenterX = 160;
-//   private static int screenCenterY = 120;
-  
-//   //screen size: x= 634, y =  480
-  
-//   //measurement:
-//   private static double focalLength = 320.8; //focal length in pixels
-//   private static double ballRadius = 12.5;
-//   private static double distanceCameraToBall = 0;
-  
-//   private static double depth = ballRadius;
-//   private static int robotDepth = 13;
-//   private static double cameraAngle = 55.0;//change this to another angle from flour
-//   public static double ballDistance;
-//   public static double ballAngleX;
-//   public static double ballAngleY;
-
-//   private static Mat thresh = new Mat();
-//   private static Mat frameHSV = new Mat();
-//   private static Mat circles = new Mat();
-//   private static Mat source = new Mat();
-
-// private Mat process(Mat frame) {
-  
-//   // SmartDashboard.putString("rr: ", "11");
-//   // Mat frame = frames.get(frames.size() - 1);
-//   //Mat frameHSV = new Mat();  
-//   Imgproc.cvtColor(frame, frameHSV, Imgproc.COLOR_BGR2HSV);
-//   //Mat thresh = new Mat();
-  
-//   //red color - need to change
-//   if (red){
-//   Core.inRange(frameHSV, new Scalar(0, 130, 130),
-//          new Scalar(20, 240, 255), thresh);
-//   }
-//   else{
-//   Core.inRange(frameHSV, new Scalar(95, 50, 0),
-//           new Scalar(110, 255, 255), thresh);
-//   }
-
-// List<Mat> frames = new ArrayList<Mat>();//new List<Mat>();
-//   Core.split(thresh, frames);
-//   Mat gray = frames.get(0);
-//   // System.out.println("Test");
-// //Default:
-// //            Core.inRange(frameHSV, new Scalar(sliderLowH.getValue(), sliderLowS.getValue0(), sliderLowV.getValue()),
-// //                    new Scalar(sliderHighH.getValue(), sliderHighS.getValue(), sliderHighV.getValue()), thresh);
-
-//   // Imgproc.putText(frame, ".", new Point(screenCenterX, screenCenterY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 3);	
-//   Imgproc.medianBlur(gray, gray, 5);
-//   //Mat circles = new Mat();    	        	  
-    
-//   Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 2.0,
-//             2*(double)gray.rows(), // change this value to detect circles with different distances to each other
-//             50.0, 30.0, 10, 0); // change the last two parameters
-//                   // (min_radius & max_radius) to detect larger circles - need to change min radius to normal values
-//   for (int x = 0; x < circles.cols(); x++) {
-//     // SmartDashboard.putString("TestA: ", "0");
-//     // System.out.println("TestA");.
-
-//     double[] c = circles.get(0, x);
-              
-//       int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
-//       int cY = (int) Math.round(c[1]/5 - 1)*5;
-//       Point center = new Point(cX, cY);
-//       int radius = (int) Math.round(c[2]);
-//       // System.out.println(radius);
-              
-//       String coordinateXY = cX + "," + cY;
-              
-//               // circle center
-//       // Imgproc.circle(frame, center, 1, new Scalar(0,255,100), 3, 8, 0);
-//               // circle outline
-//       Imgproc.circle(frame, center, radius, new Scalar(255,0,255), 3, 8, 0);
-              
-//       // Imgproc.putText(frame, coordinateXY, new Point(cX, cY), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 111), 2);
-//             //distance from camera to ball
-//           distanceCameraToBall = Math.round(focalLength*ballRadius/radius) - depth;
-//               //distance from robot to ball                      
-//           ballDistance = (double) Math.round(distanceCameraToBall*Math.sin(Math.toRadians(cameraAngle))/2)*2- robotDepth;
-          
-//           // String Dsize = "Distance: " + ballDistance + "cm";
-//           int kat1 = cX-screenCenterX;
-//           int kat2 = cY-screenCenterY; 
-//           // SmartDashboard.putString("TestB: ", "0");
-//           // System.out.println("TestB");                     
+      Mat source = new Mat();
+      //Mat output = new Mat();
+      
+      while(!Thread.interrupted()) {
+        if (cvSink.grabFrame(source) == 0) {
+          // Send the output the error.
+          outputStream.notifyError(cvSink.getError());
+          continue;
+        }
+        // SmartDashboard.putString("temp", "1");
+        //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+        //outputStream.putFrame(output);
+        // System.out.println(red);
+        String tempColor;
+        if (red) {
+          tempColor = "red";
+        }
+        else {
+          tempColor = "blue";
+        }
+          // System.out.println(red);
+          Mat processed = vision.process(source, tempColor);
         
-//           ballAngleX = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat1/(radius*ballDistance)))/2)*2;
-//           // ballAngleY = (double) Math.round(Math.toDegrees(Math.atan(ballRadius*kat2/(radius*ballDistance)))/5)*5;
-          
-// //						new Point(x, y) 
-//           //showing angles and distance on the screen
-//           // String stringBallAngleX = ballAngleX + " X";
-//           // String stringBallAngleY =  ballAngleY + " Y "; 
-//           // Imgproc.putText(frame, Dsize, new Point(50, 50), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 2);	
-//           // String stringBallAngleX = ballAngleX + " X";
-//           // String stringBallAngleY =  ballAngleY + " Y "; 
-//           // String Dsize = ballDistance + "cm";
-//           // SmartDashboard.putString("Distance to ball: ", Dsize);
-//           // SmartDashboard.putString("Angle X: ", stringBallAngleX);
-//           // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-//           // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
-          
-//           // Imgproc.putText(frame, Dsize, new Point(10, 20), Imgproc.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 0), 1);	
-//           // Imgproc.putText(frame, stringBallAngleX, new Point(20, 100), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);	
-//           // Imgproc.putText(frame, stringBallAngleY, new Point(20, 150), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 255, 0), 4);
-//         }
-//     return thresh;
-// }
+        // else {
+        //   Mat processed = vision.process(source, "blue");
+        // }
+        outputStream.putFrame(source);
+
+
+        // System.out.println("ddd"s);
+        // SmartDashboard.(processed);
+        outputStream2.putFrame(processed);
+      }
+    }).start();
+}
   /**
    * This functi on is called every robot packet, no matter the mode. Use
    * this for items like diagnostics that you want ran during disabled,
@@ -569,7 +274,8 @@ public class Robot extends TimedRobot {
     
     m_autoSelected = m_chooser.getSelected();
     colorSelected = color_chooser.getSelected();
-    speedStr = SmartDashboard.getString("Shooter Speed","0.7");
+    speedStr = SmartDashboard.getString("Shooter Adjustment",Double.toString(shootingPower));
+    climbStr = SmartDashboard.getString("Climb Adjustment",Double.toString(climbPower));
     leftEncoder = 96.52 *m_robotDrive.getLeftDistance();
     rightEncoder = -96.52*m_robotDrive.getRightDistance();
     
@@ -580,7 +286,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
     SmartDashboard.putNumber("LEncoder", leftEncoder);
     SmartDashboard.putNumber("REncoder", rightEncoder); 
-
+    SmartDashboard.putString("Smart Status", statusString);
     SmartDashboard.putNumber("Ball Distance", ballDistance);
     SmartDashboard.putNumber("Angle X", ballAngleX);
     SmartDashboard.putNumber("Shooting Velocity", shooterEncoder.getVelocity());
@@ -624,18 +330,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    
-    // try {
-    //Trajectory trajectory = TrajectoryUtil.fromPathweaverJson(Paths.get("/home/lvuser/deploy/YourPath.wpilib.json"));
-    // }
-    // catch (IOException e)
-    // {}
-    // ramsete1.initialize();
-    // ramsete2.initialize();
-    m_timer.reset();
-    m_timer.start();
-    m_robotDrive.resetEncoders();
-    autoState = "shoot";
+    auton.init(m_robotDrive);
   }
 
   /**
@@ -643,110 +338,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-    // ramsete1.execute();
-    // if (ramsete1.isFinished() && resetBool){
-    //   resetBool = false;
-    //   m_timer.reset();
-    //   m_timer.start();
-    // }
-    // // DriverStation.reportWarning(Double.toString(m_timer.get()), true);
-    // shooterMotor.set(0); 
-    // if (m_timer.get() < 2.0 && !resetBool) {
-    //   shooterMotor.set(0.7);
-    // } 
-    // else{
-    // ramsete2.execute();
-    // }
-
-    // if (m_timer.get() < 2.0) {
-    //      m_robotDrive.arcadeDrive(0, .65); // drive forwards half speed
-    // }
-    if (autoState == "firstDrive"){
-      if (driveSetDistance(0.15, 0.7) == true){
-        autoState = "shoot";
-        m_timer.reset();
-        m_timer.start();
-        m_robotDrive.arcadeDrive(0, 0);
-      }
-    }
-    else if (autoState == "shoot"){
-      if (m_timer.get()<2.0){
-        shooterMotor.set(shootingPower);
-        conveyorMotor.set(0.7);
-      }
-      else {
-        m_timer.reset();
-        m_timer.start();
-        shooterMotor.set(0);
-
-        conveyorMotor.set(0);
-        m_robotDrive.resetEncoders();
-        autoState = "secondDrive";
-      }
-    }
-    else if (autoState == "secondDrive"){
-      // intakeSolenoid.set(true);
-      // intakeMotor.set(ControlMode.PercentOutput, 0.7);
-      // if (driveSetDistance(-1.3, -0.7) == true){
-      //   autoState = "finished";
-      // }
-      if (m_timer.get()<2.0){
-        m_robotDrive.arcadeDrive(0, -0.7);
-        intakeSolenoid.set(true);
-        intakeMotor.set(ControlMode.PercentOutput, 0.65);
-        conveyorMotor.set(0.5);
-        shooterMotor.set(-0.1);
-      }
-      else {
-        m_timer.reset();
-        m_timer.start();
-        intakeSolenoid.set(false);
-        intakeMotor.set(ControlMode.PercentOutput, 0);
-        conveyorMotor.set(0);
-        shooterMotor.set(0);
-        autoState = "finished";
-      }
-    }
-    // else if (autoState == "thirdDrive"){
-    //   // intakeSolenoid.set(true);
-    //   // intakeMotor.set(ControlMode.PercentOutput, 0.7);
-    //   // if (driveSetDistance(-1.3, -0.7) == true){
-    //   //   autoState = "finished";
-    //   // }
-    //   if (m_timer.get()<2.0){
-    //     m_robotDrive.arcadeDrive(0, 0.7);
-    //     conveyorMotor.set(0.5);
-    //     shooterMotor.set(-0.1);
-    //   }
-    //   else {
-    //     m_timer.reset();
-    //     m_timer.start();
-    //     m_robotDrive.arcadeDrive(0, 0);
-    //     autoState = "shoot2";
-    //   }
-    // }
-    // else if (autoState == "shoot"){
-    //   if (1.0< m_timer.get() && m_timer.get()<3.0){
-    //     shooterMotor.set(shootingPower);
-    //     conveyorMotor.set(0.7);
-    //   }
-    //   else {
-    //     m_timer.reset();
-    //     m_timer.start();
-    //     shooterMotor.set(0);
-    //     conveyorMotor.set(0);
-    //     m_robotDrive.resetEncoders();
-    //     autoState = "finished";
-    //   }
-    // }
-    else {//if (autoState == "finished")
-      m_robotDrive.arcadeDrive(0, 0);
-      intakeSolenoid.set(false);
-      intakeMotor.set(ControlMode.PercentOutput, 0);
-      conveyorMotor.set(0.5);
-      shooterMotor.set(0);
-      
-    }
+    auton.execute(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid);
   }
 
   /**
@@ -759,24 +351,9 @@ public class Robot extends TimedRobot {
     m_tTankDrive.execute();
     } 
     shootingPower = Double.parseDouble(speedStr);
+    climbPower = Double.parseDouble(climbStr);
     swapState = m_stick.getRawButton(4);
-    if(m_stick.getRawButton(1)){
-      climbSolenoid.set(true);
-      // System.out.println("FIRING CLIMB");
-      // climbMotor.set(0);
-    }
-    else{
-      climbSolenoid.set(false);
-      // climbMotor.set(0.7);
-    }
-    
-    // runShotAndIntake(7,8, shootingPower, nowState);
-    runShotAndIntake(7,8, shootingPower, nowState);
-    // motor, button, power
-    // runCANMechanism(shooterMotor, 7, shootingPower, false, shootingPower/10);
-    // runPneumaticCompressor(pcmCompressor, 2, true);
-    // runPneumaticSolenoid(intakeSolenoid, 3, true);
-
+    Mechanisms.runShotAndIntake(7,8, shootingPower, nowState);
     //establishes minimum and maximums of deadzone
     final double deadZone=0.4;
     final double minZone=0.07;
@@ -797,14 +374,12 @@ public class Robot extends TimedRobot {
     //The % power used
     final double turnLimit = 0.4;
     double speedLimit=0.5;
-    final double leftAdj = 0;
     //Reports joystick numbers
     // DriverStation.reportWarning("Raw Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
     //Mathmomagic! For X and Y 
     if(minZone<Math.abs(yprime)){
       // yprime=deadZone*Math.signum(yprime);
         yprime=(Math.abs(yprime)/yprime)*(deadZone+speedLimit*(1-deadZone)*(Math.abs(yprime)+deadZone)/(1))-deadZone/4;
-        
         // DriverStation.reportWarning("BANANA"+((Double)Math.abs(yprime)).toString(),true);
     }
     else{
@@ -863,22 +438,26 @@ public class Robot extends TimedRobot {
       
       if (angle>0 && angle>margin){
         driveModified = true;
-        DriverStation.reportWarning("angle>0",true);
+        // DriverStation.reportWarning("angle>0",true);
         // m_robotDrive.arcadeDrive(speed, yprime);
-        m_robotDrive.drive(-speed/2, speed/4);
+        m_robotDrive.drive(speed/4, -speed/2);
+        statusString = "angle > 0";
       }
       else if (angle<0 && angle<-margin){
         driveModified = true;
-        DriverStation.reportWarning("angle<0",true);
-        m_robotDrive.drive(speed/4, -speed/2);
+        // DriverStation.reportWarning("angle<0",true);
+        m_robotDrive.drive(-speed/2, speed/4);
+        statusString = "angle < 0";
         // m_robotDrive.arcadeDrive(-speed, yprime);
       }
       else if (Math.abs(angle) < margin){
         driveModified = true;
-        m_robotDrive.resetEncoders();
-        if (leftEncoder<initialBallDistance && rightEncoder < initialBallDistance){
-          m_robotDrive.arcadeDrive(0, -speed/2);
-        }
+        // m_robotDrive.resetEncoders();
+        // if (leftEncoder<initialBallDistance && rightEncoder < initialBallDistance){
+        m_robotDrive.arcadeDrive(0, -speed/2);
+        statusString = "angle < margin";
+        
+        // }
       }
   
   }
@@ -902,4 +481,5 @@ public class Robot extends TimedRobot {
   @Override
   public void testPeriodic() {
   }
+
 }

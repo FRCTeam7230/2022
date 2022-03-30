@@ -53,8 +53,8 @@ public class ThresholdInRange {
         
         //red color - need to change
         if (color == "red"){
-            Core.inRange(frameHSV, new Scalar(0, 70, 70),
-                new Scalar(10, 255, 255), thresh);
+            Core.inRange(frameHSV, new Scalar(0, 80, 40),
+                new Scalar(15, 255, 255), thresh);
         }
         else{
             Core.inRange(frameHSV, new Scalar(95, 50, 0),
