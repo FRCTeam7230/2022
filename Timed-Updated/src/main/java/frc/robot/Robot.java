@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj.Compressor;
 // import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
+import frc.robot.subsystems.Drivetrain;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 // import edu.wpi.first.math.trajectory.Trajectory;
 // import edu.wpi.first.math.trajectory.Trajectory.State;
@@ -130,12 +131,13 @@ public class Robot extends TimedRobot {
   private boolean prevState = false;
   private boolean prevState2 = false, swapState = false;
   private boolean driveModified = false;  
+  public Drivetrain driveTrain = new Drivetrain(m_robotDrive, m_stick);
   double ballDistance, ballAngleX;
   double initialBallDistance;
   private double invertAxis = -1;
   private ThresholdInRange vision = new ThresholdInRange();
-  private Autonomous auton = new Autonomous();
   private boolean nowState;
+
   public static double leftEncoder, rightEncoder;
   /*
   * CAN IDS:
@@ -165,14 +167,14 @@ public class Robot extends TimedRobot {
   private VictorSPX intakeMotor = new VictorSPX(7);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
-  private Solenoid climbSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 1);
-  private CANSparkMax climbMotor = new CANSparkMax(8, CANSparkMax.MotorType.kBrushless);
   NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
   NetworkTableEntry bD = table.getEntry("Ball Distance");
   NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
   NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
   private RelativeEncoder shooterEncoder = shooterMotor.getEncoder();
+  private Mechanisms mechanisms = new Mechanisms(m_stick, m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid);
   
+  private Autonomous auton = new Autonomous(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid);
   // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
@@ -209,8 +211,6 @@ public class Robot extends TimedRobot {
     color_chooser.setDefaultOption("Red", "red");
     color_chooser.addOption("Blue", "blue");
     SmartDashboard.putData("Color choice", color_chooser);
-    
-    // speedStr = SmartDashboard.getString("Shooter Speed","0.7");
     SmartDashboard.putString("Shooter Adjustment", speedStr);
     SmartDashboard.putString("Climb Adjustment", climbStr);
     SmartDashboard.putNumber("Shooter Speed", shooterEncoder.getVelocity());
@@ -218,14 +218,10 @@ public class Robot extends TimedRobot {
       UsbCamera camera = CameraServer.startAutomaticCapture();
       camera.setResolution(width, height);
       camera.setVideoMode(PixelFormat.kYUYV, width, height, 10);
-
       CvSink cvSink = CameraServer.getVideo();
       CvSource outputStream = CameraServer.putVideo("Blur", width, height);
       CvSource outputStream2 = CameraServer.putVideo("Target", width, height);
-
       Mat source = new Mat();
-      //Mat output = new Mat();
-      
       while(!Thread.interrupted()) {
         if (cvSink.grabFrame(source) == 0) {
           // Send the output the error.
@@ -235,7 +231,6 @@ public class Robot extends TimedRobot {
         // SmartDashboard.putString("temp", "1");
         //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
         //outputStream.putFrame(output);
-        // System.out.println(red);
         String tempColor;
         if (red) {
           tempColor = "red";
@@ -250,10 +245,6 @@ public class Robot extends TimedRobot {
         //   Mat processed = vision.process(source, "blue");
         // }
         outputStream.putFrame(source);
-
-
-        // System.out.println("ddd"s);
-        // SmartDashboard.(processed);
         outputStream2.putFrame(processed);
       }
     }).start();
@@ -268,21 +259,14 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-
     ballDistance = vision.getDistance()*0.01;
     ballAngleX = vision.getAngleX();
-    
     m_autoSelected = m_chooser.getSelected();
     colorSelected = color_chooser.getSelected();
-    speedStr = SmartDashboard.getString("Shooter Adjustment",Double.toString(shootingPower));
-    climbStr = SmartDashboard.getString("Climb Adjustment",Double.toString(climbPower));
     leftEncoder = 96.52 *m_robotDrive.getLeftDistance();
     rightEncoder = -96.52*m_robotDrive.getRightDistance();
-    
-    // System.out.println("Drive: " + m_autoSelected);
-    // System.out.println("Shooter Speed: " + speedStr);
-    // SmartDashboard.putNumber("LEncoder", m_robotDrive.getLeftEncoder().getDistance());
-    // SmartDashboard.putNumber("REncoder", m_robotDrive.getRightEncoder().getDistance());
+    speedStr = SmartDashboard.getString("Shooter Adjustment",Double.toString(shootingPower));
+    climbStr = SmartDashboard.getString("Climb Adjustment",Double.toString(climbPower));
     SmartDashboard.putNumber("Turn", m_robotDrive.getTurnRate());
     SmartDashboard.putNumber("LEncoder", leftEncoder);
     SmartDashboard.putNumber("REncoder", rightEncoder); 
@@ -290,10 +274,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Ball Distance", ballDistance);
     SmartDashboard.putNumber("Angle X", ballAngleX);
     SmartDashboard.putNumber("Shooting Velocity", shooterEncoder.getVelocity());
-    double x = 1;
-    double y = 1;
-    bAngleX.setDouble(x);
-    bAngleY.setDouble(y);
+    bAngleX.setDouble(1);
+    bAngleY.setDouble(1);
     bD.setDouble(ballDistance);
     pcmCompressor.enableDigital();
     SmartDashboard.putNumber("Ball Distance", bD.getDouble(ballDistance));  
@@ -312,9 +294,7 @@ public class Robot extends TimedRobot {
       case "blue":
         red = false;
         break;
-    }
-
-    
+    }    
   }
 
   /**
@@ -330,7 +310,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    auton.init(m_robotDrive);
+    auton.init();
   }
 
   /**
@@ -338,7 +318,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-    auton.execute(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid);
+    auton.execute();
   }
 
   /**
@@ -353,128 +333,47 @@ public class Robot extends TimedRobot {
     shootingPower = Double.parseDouble(speedStr);
     climbPower = Double.parseDouble(climbStr);
     swapState = m_stick.getRawButton(4);
-    Mechanisms.runShotAndIntake(7,8, shootingPower, nowState);
-    //establishes minimum and maximums of deadzone
-    final double deadZone=0.4;
-    final double minZone=0.07;
-    final double xOffset = 0.0;
-    //positive xOffset goes right
-    //gets joystick values and creates curves
+    mechanisms.runShotAndIntake(7,8, shootingPower, nowState);
+    driveTrain.drive(tank, driveModified);
     nowState = m_stick.getRawButton(3);
-    double y = m_stick.getRawAxis(1);
-    double yprime = Math.pow(y,3);
-      // double yprime=-y;
-    double x = m_stick.getRawAxis(2);
-    double xprime = Math.pow(x,3);
-      // double xprime=x;
-    double accelFactor = 2.0;
-    double slowFactor = 0.85;
-    double speedFactor = 0.825;
-    double turnFactor = 0.925;
-    //The % power used
-    final double turnLimit = 0.4;
-    double speedLimit=0.5;
-    //Reports joystick numbers
-    // DriverStation.reportWarning("Raw Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
-    //Mathmomagic! For X and Y 
-    if(minZone<Math.abs(yprime)){
-      // yprime=deadZone*Math.signum(yprime);
-        yprime=(Math.abs(yprime)/yprime)*(deadZone+speedLimit*(1-deadZone)*(Math.abs(yprime)+deadZone)/(1))-deadZone/4;
-        // DriverStation.reportWarning("BANANA"+((Double)Math.abs(yprime)).toString(),true);
+    if (prevState == false && nowState == true){
+      m_robotDrive.resetEncoders();
+      initialBallDistance = ballDistance;
+    }
+    prevState=m_stick.getRawButton(3);
+    if (nowState){
+        intakeSolenoid.set(nowState);
+        intakeMotor.set(ControlMode.PercentOutput, 0.65);
+        conveyorMotor.set(0.5);
+        // DriverStation.reportWarning("ANGLE: "+Double.toString(angle),true);
+        double speed = 0.7;
+        double margin = 3;
+        double angle = ballAngleX;
+        if (angle>0 && angle>margin){
+          driveModified = true;
+          // DriverStation.reportWarning("angle>0",true);
+          m_robotDrive.drive(speed/4, -speed/2);
+          statusString = "angle > 0";
+        }
+        else if (angle<0 && angle<-margin){
+          driveModified = true;
+          // DriverStation.reportWarning("angle<0",true);
+          m_robotDrive.drive(-speed/2, speed/4);
+          statusString = "angle < 0";
+        }
+        else if (Math.abs(angle) < margin){
+          driveModified = true;
+          // m_robotDrive.resetEncoders();
+          // if (leftEncoder<initialBallDistance && rightEncoder < initialBallDistance){
+          m_robotDrive.arcadeDrive(0, -speed/2);
+          statusString = "angle < margin";
+          // }
+        }
     }
     else{
-      yprime=0;
+      driveModified = false;
     }
-    if(minZone<Math.abs(xprime)){
-      xprime=Math.abs(xprime)/xprime*(deadZone+turnLimit*(1-deadZone)*(Math.abs(x)-0.1)/0.9);
-      // if (yprime<0){
-      //   yprime*=leftAdj;
-      // }
-        //DriverStation.reportWarning("KIWI"+((Double)Math.abs(xprime)).toString(),true);
-    }
-    else{
-      xprime=0;
-    }
-    // DriverStation.reportWarning("New Y,X: "+((Double)yprime).toString()+","+((Double)xprime).toString(),true);
-    // R Bumper is 6
-    if(m_stick.getRawButton(5)){
-      yprime*=accelFactor;
-    }
-    
-    if(m_stick.getRawButton(6)){
-      yprime*=slowFactor;
-      xprime*=slowFactor; 
-    }
-    xprime *= turnFactor;
-    yprime *= speedFactor;
-    //Actual drive part
-    if (!tank && !driveModified){
-      m_robotDrive.arcadeDrive(invertAxis * (xprime+xOffset), invertAxis *(yprime));
-    }
-  if (m_stick.getRawButton(10)){
-    m_robotDrive.resetEncoders();
   }
-  double speed = 0.7;
-  double margin = 3;
-  double angle = ballAngleX;
-  // ballDistance*=0.01;
-  if (swapState == true && prevState2 == false){
-    invertAxis *= -1;
-    prevState2 = true;
-  }
-  else if (!swapState){
-    prevState2 = false;
-  }
-  if (prevState == false && nowState == true){
-    m_robotDrive.resetEncoders();
-    initialBallDistance = ballDistance;
-  }
-  prevState=m_stick.getRawButton(3);
-  if (nowState){
-      intakeSolenoid.set(nowState);
-      intakeMotor.set(ControlMode.PercentOutput, 0.65);
-      conveyorMotor.set(0.5);
-      // DriverStation.reportWarning("ANGLE: "+Double.toString(angle),true);
-      
-      if (angle>0 && angle>margin){
-        driveModified = true;
-        // DriverStation.reportWarning("angle>0",true);
-        // m_robotDrive.arcadeDrive(speed, yprime);
-        m_robotDrive.drive(speed/4, -speed/2);
-        statusString = "angle > 0";
-      }
-      else if (angle<0 && angle<-margin){
-        driveModified = true;
-        // DriverStation.reportWarning("angle<0",true);
-        m_robotDrive.drive(-speed/2, speed/4);
-        statusString = "angle < 0";
-        // m_robotDrive.arcadeDrive(-speed, yprime);
-      }
-      else if (Math.abs(angle) < margin){
-        driveModified = true;
-        // m_robotDrive.resetEncoders();
-        // if (leftEncoder<initialBallDistance && rightEncoder < initialBallDistance){
-        m_robotDrive.arcadeDrive(0, -speed/2);
-        statusString = "angle < margin";
-        
-        // }
-      }
-  
-  }
-  else{
-    driveModified = false;
-  }
-
-  // if (angle>0 && angle>margin){
-  //   System.out.println("driving R");
-  // }
-  // else if (angle<0 && angle<margin){
-  //   System.out.println("driving L");
-  // }
-  // else if (Math.abs(angle) < margin){
-  //   System.out.println("driving F");
-  // }
-}
   /**
    * This function is called periodically during test mode.
    */

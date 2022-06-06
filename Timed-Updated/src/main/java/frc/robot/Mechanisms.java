@@ -11,15 +11,15 @@ import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.DriveSubsystem;
 public class Mechanisms {
-    private static DriveSubsystem m_DriveSubsystem;
-    private static CANSparkMax shooterMotor, conveyorMotor; 
-    private static VictorSPX intakeMotor;
-    private static Solenoid intakeSolenoid;
-    private static Joystick m_stick;
-    private static double leftEncoder, rightEncoder;
-    private static boolean previousState = false;
-    private static Timer climbTimer = new Timer();
-    private static Timer shotTimer = new Timer();
+    private DriveSubsystem m_DriveSubsystem;
+    private CANSparkMax shooterMotor, conveyorMotor; 
+    private VictorSPX intakeMotor;
+    private Solenoid intakeSolenoid;
+    private Joystick m_stick;
+    private double leftEncoder, rightEncoder;
+    private boolean previousState = false;
+    private Timer climbTimer = new Timer();
+    private Timer shotTimer = new Timer();
     public Mechanisms(Joystick stick, DriveSubsystem subsystem, CANSparkMax shooter, CANSparkMax conveyor, VictorSPX intake, Solenoid intakeSol){
         m_stick = stick;
         m_DriveSubsystem = subsystem;
@@ -30,7 +30,7 @@ public class Mechanisms {
 
     }
     
-   public static void runCANMechanism(CANSparkMax motor, int button, double power, boolean invert, double offPower){
+   public void runCANMechanism(CANSparkMax motor, int button, double power, boolean invert, double offPower){
     boolean state = m_stick.getRawButton(button); 
     double newPower = power;
      if (invert){
@@ -45,7 +45,7 @@ public class Mechanisms {
      
    } 
 
-   public static void runSPXMechanism(VictorSPX motor, int button, double power, boolean invert){
+   public void runSPXMechanism(VictorSPX motor, int button, double power, boolean invert){
     double newPower = power;
     if (invert){
       newPower*=-1;
@@ -59,7 +59,7 @@ public class Mechanisms {
     }
   } 
 
-   public static void runPneumaticCompressor(Compressor comp, int button, boolean enabled){
+   public void runPneumaticCompressor(Compressor comp, int button, boolean enabled){
     if(m_stick.getRawButton(button)){
         // DriverStation.reportWarning("running compressor",true);
         comp.enableDigital();
@@ -70,7 +70,7 @@ public class Mechanisms {
       comp.disable();
     }
   } 
-  public static void runPneumaticSolenoid(Solenoid solenoid, int button, boolean enabled){
+  public void runPneumaticSolenoid(Solenoid solenoid, int button, boolean enabled){
    if(m_stick.getRawButton(button) && enabled){
         // DriverStation.reportWarning("running solenoid",true);
         solenoid.set(true);
@@ -82,7 +82,7 @@ public class Mechanisms {
      
    }
  } 
-  public static void runClimber(int button, double speed, CANSparkMax motor, Solenoid solenoid){
+  public void runClimber(int button, double speed, CANSparkMax motor, Solenoid solenoid){
     climbTimer.reset();
     climbTimer.start();
     if (climbTimer.get() < 4.0){
@@ -100,7 +100,7 @@ public class Mechanisms {
     
   }
 // button1 = shoot, button2 = intake
-  public static void runShotAndIntake(int button1, int button2, double power, boolean enabled){
+  public void runShotAndIntake(int button1, int button2, double power, boolean enabled){
     boolean state1 = m_stick.getRawButton(button1);
     boolean state2 = m_stick.getRawButton(button2); 
       double newPower = power;
@@ -142,7 +142,7 @@ public class Mechanisms {
       runSPXMechanism(intakeMotor, button2, 0.65, false);
   }
 
-  public static boolean driveSetDistance(double distance, double speed){
+  public boolean driveSetDistance(double distance, double speed){
     boolean finished = false;
     leftEncoder = 96.52 *m_DriveSubsystem.getLeftDistance();
     rightEncoder = -96.52*m_DriveSubsystem.getRightDistance();

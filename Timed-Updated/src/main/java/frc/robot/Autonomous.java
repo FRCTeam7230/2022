@@ -5,63 +5,79 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.DriveSubsystem;
+import edu.wpi.first.wpilibj.Joystick;
 public class Autonomous {
   private Timer autonomousTimer = new Timer();
   private String autoState;
-  public void init(DriveSubsystem subsystem){
-    autonomousTimer.reset();
-    autonomousTimer.start();
-    subsystem.resetEncoders();
+  private DriveSubsystem m_dDriveSubsystem;
+  private Mechanisms mechanisms;
+  private CANSparkMax shooter, conveyor;
+  private VictorSPX intake;
+  private Solenoid intakeSol;
+  
+  public Autonomous(DriveSubsystem subsystem, CANSparkMax shooterMotor, CANSparkMax conveyorMotor, VictorSPX intakeMotor, Solenoid intakeSolenoid){
+
+    m_dDriveSubsystem=subsystem;
+    m_dDriveSubsystem.resetEncoders();
+    shooter = shooterMotor;
+    conveyor = conveyorMotor;
+    intake = intakeMotor;
+    intakeSol = intakeSolenoid;
     autoState = "shoot";
   }
-  public void execute(DriveSubsystem subsystem, CANSparkMax shooterMotor, CANSparkMax conveyorMotor, VictorSPX intakeMotor, Solenoid intakeSolenoid){
+  public void init(){
+    m_dDriveSubsystem.resetEncoders();    
+    autonomousTimer.reset();
+    autonomousTimer.start();
+  }
+  public void execute(){
     if (autoState == "firstDrive"){
-        if (Mechanisms.driveSetDistance(0.15, 0.7) == true){
+        if (mechanisms.driveSetDistance(0.15, 0.7) == true){
           autoState = "shoot";
           autonomousTimer.reset();
           autonomousTimer.start();
-          subsystem.arcadeDrive(0, 0);
+          m_dDriveSubsystem.arcadeDrive(0, 0);
         }
       }
       else if (autoState == "shoot"){
         if (autonomousTimer.get()<2.0){
-          shooterMotor.set(0.7);
-          conveyorMotor.set(0.7);
+          shooter.set(0.7);
+          conveyor.set(0.7);
         }
         else {
           autonomousTimer.reset();
           autonomousTimer.start();
-          shooterMotor.set(0);
+          shooter.set(0);
   
-          conveyorMotor.set(0);
-          subsystem.resetEncoders();
+          conveyor.set(0);
+          m_dDriveSubsystem.resetEncoders();
           autoState = "secondDrive";
         }
       }
       else if (autoState == "secondDrive"){
         if (autonomousTimer.get()<2.0){
-          subsystem.arcadeDrive(0, -0.7);
-          intakeSolenoid.set(true);
-          intakeMotor.set(ControlMode.PercentOutput, 0.65);
-          conveyorMotor.set(0.5);
-          shooterMotor.set(-0.1);
+          m_dDriveSubsystem.arcadeDrive(0, -0.7);
+          intakeSol.set(true);
+          intake.set(ControlMode.PercentOutput, 0.65);
+          conveyor.set(0.5);
+          shooter.set(-0.1);
         }
         else {
           autonomousTimer.reset();
           autonomousTimer.start();
-          intakeSolenoid.set(false);
-          intakeMotor.set(ControlMode.PercentOutput, 0);
-          conveyorMotor.set(0);
-          shooterMotor.set(0);
+          intakeSol.set(false);
+          intake.set(ControlMode.PercentOutput, 0);
+          conveyor.set(0);
+          shooter.set(0);
           autoState = "finished";
         }
       }
       else {//if (autoState == "finished")
-        subsystem.arcadeDrive(0, 0);
-        intakeSolenoid.set(false);
-        intakeMotor.set(ControlMode.PercentOutput, 0);
-        conveyorMotor.set(0.5);
-        shooterMotor.set(0);
+        m_dDriveSubsystem.arcadeDrive(0, 0);
+        intakeSol.set(false);
+        intake.set(ControlMode.PercentOutput, 0);
+        conveyor.set(0.5);
+        shooter.set(0);
         
       }
   }
