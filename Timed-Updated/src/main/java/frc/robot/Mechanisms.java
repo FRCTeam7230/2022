@@ -138,7 +138,7 @@ public class Mechanisms {
       if (!state1 && !state2){
         conveyorMotor.set(0);
       }
-      runPneumaticSolenoid(intakeSolenoid, button2, !enabled);
+      runPneumaticSolenoid(intakeSolenoid, button2, enabled);
       runSPXMechanism(intakeMotor, button2, 0.65, false);
   }
 
