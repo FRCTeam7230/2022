@@ -330,10 +330,11 @@ public class Robot extends TimedRobot {
     if (tank){
     m_tTankDrive.execute();
     } 
+    // intakeSolenoid.set(true);
     shootingPower = Double.parseDouble(speedStr);
     climbPower = Double.parseDouble(climbStr);
     swapState = m_stick.getRawButton(4);
-    mechanisms.runShotAndIntake(7,8, shootingPower, nowState);
+    mechanisms.runShotAndIntake(7,8, shootingPower, true);
     driveTrain.drive(tank, driveModified);
     nowState = m_stick.getRawButton(3);
     if (prevState == false && nowState == true){
