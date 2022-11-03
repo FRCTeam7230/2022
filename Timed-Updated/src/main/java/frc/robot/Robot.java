@@ -164,9 +164,11 @@ public class Robot extends TimedRobot {
   // TODO: Change the ID of shooterMotor, or use different motor controllers
   private CANSparkMax shooterMotor = new CANSparkMax(5, CANSparkMax.MotorType.kBrushless);
   private CANSparkMax conveyorMotor = new CANSparkMax(6, CANSparkMax.MotorType.kBrushless);
+  //private CANSparkMax climberMotor = new CANSparkMax(7, CANSparkMax.MotorType.kBrushless);
   private VictorSPX intakeMotor = new VictorSPX(7);
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
+  private Solenoid climberSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 8);//can id for climber?
   NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
   NetworkTableEntry bD = table.getEntry("Ball Distance");
   NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
@@ -372,6 +374,22 @@ public class Robot extends TimedRobot {
     }
     else{
       driveModified = false;
+    }
+    if(m_stick.getRawButton(1)){//climber up (button subject to change. could be left and right bumpers for easier use, possible move location)
+      climberSolenoid.set(m_stick.getRawButton(1));
+      //what moter runs + at what speed? climberMotor.set(0.5);
+    }
+    else{
+      climberSolenoid.set(false);
+      //what motor runs? climberMotor.set(0);
+    }
+    if(m_stick.getRawButton(2)){//climber down
+      climberSolenoid.set(m_stick.getRawButton(2));
+      //what moter runs? climberMotor.set(-0.5);
+    }
+    else{
+      climberSolenoid.set(false);
+      //what motor runs climberMotor.set(0);
     }
   }
   /**

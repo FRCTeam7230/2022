@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.DriveSubsystem;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 public class Mechanisms {
     private DriveSubsystem m_DriveSubsystem;
     private CANSparkMax shooterMotor, conveyorMotor; 
@@ -18,8 +19,11 @@ public class Mechanisms {
     private Joystick m_stick;
     private double leftEncoder, rightEncoder;
     private boolean previousState = false;
+    private Solenoid climberSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 2);
+    private CANSparkMax climberMotor = new CANSparkMax(8, CANSparkMax.MotorType.kBrushless);
     private Timer climbTimer = new Timer();
     private Timer shotTimer = new Timer();
+    private Timer climberTimer = new Timer();
     public Mechanisms(Joystick stick, DriveSubsystem subsystem, CANSparkMax shooter, CANSparkMax conveyor, VictorSPX intake, Solenoid intakeSol){
         m_stick = stick;
         m_DriveSubsystem = subsystem;
@@ -141,7 +145,10 @@ public class Mechanisms {
       runPneumaticSolenoid(intakeSolenoid, button2, !enabled);
       runSPXMechanism(intakeMotor, button2, 0.65, false);
   }
-
+  public void timerRestart(){
+    climberTimer.reset();
+    climberTimer.start();
+  }
   public boolean driveSetDistance(double distance, double speed){
     boolean finished = false;
     leftEncoder = 96.52 *m_DriveSubsystem.getLeftDistance();
@@ -154,6 +161,46 @@ public class Mechanisms {
     else {
       finished = true;
     }
+
     return finished;
+  }
+
+  // JAVA coding conventions
+  // https://www.oracle.com/technetwork/java/codeconventions-150003.pdf
+
+  /**
+   * Move climber up and down based on button A and X
+   * 
+   * @author  Branden Tang
+   */ 
+  public void runClimber() {
+    final int BUTTON_X = 1;
+    final int BUTTON_A = 2;
+
+    if (m_stick.getRawButton(BUTTON_X)) {//move climber up
+      climberSolenoid.set(m_stick.getRawButton(BUTTON_X));
+      timerRestart();
+
+      if (climberTimer.get() < 0.1) {
+        climberMotor.set(0.5);
+      }
+    }
+    else {
+      climberSolenoid.set(false);
+      climberMotor.set(0);
+    }
+
+    if (m_stick.getRawButton(BUTTON_A)) {//move climber down
+      climberSolenoid.set(m_stick.getRawButton(BUTTON_A));
+      timerRestart();
+      
+      if (climberTimer.get() < 0.1) {
+        climberMotor.set(-0.5);
+      }
+    }
+    else {
+      climberSolenoid.set(false);
+      climberMotor.set(0);
+    }
   }
 }
