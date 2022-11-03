@@ -30,8 +30,8 @@ public class ThresholdInRange {
     private static double distanceCameraToBall = 0;
     
     private static double depth = ballRadius;
-    private static int robotDepth = 13;
-    private static double cameraAngle = 55.0;//change this to another angle from flour
+    private static int robotDepth = 0; // Previously - 13
+    private static double cameraAngle = 0.0; // Previously 55.0 //change this to another angle from flour
     public static double ballDistance;
     public static double ballAngleX, ballAngleY;
     

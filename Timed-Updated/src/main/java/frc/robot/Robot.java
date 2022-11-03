@@ -318,7 +318,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-    auton.execute();
+    auton.execute(ballDistance, ballAngleX);
   }
 
   /**
