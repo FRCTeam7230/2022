@@ -18,6 +18,39 @@ import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  public static final class robotConstants {
+    public static final int L1MOTOR_ID = 1;
+    public static final int R1MOTOR_ID = 3;
+    public static final int L2MOTOR_ID = 2;
+    public static final int R2MOTOR_ID = 4;
+    
+    public static final int X_BUTTON = 1; //CLIMBER UP
+    public static final int A_BUTTON = 2; //CLIMBER DOWN
+    public static final int B_BUTTON = 3; //SMART VISION INTAKE
+    public static final int Y_BUTTON = 4; //REVERSE
+    public static final int L_BUMPER = 5; //SPEED
+    public static final int R_BUMPER = 6; //SLOW
+    public static final int L_TRIGGER = 7; //SHOOT
+    public static final int R_TRIGGER = 8; //INTAKE
+    public static final int BACK_BUTTON = 9; 
+    public static final int START_BUTTON = 10;
+    public static final int L_JOYSTICK_PRESS = 11;
+    public static final int R_JOYSTICK_PRESS = 12;
+
+
+  }
+
+  public static final class driveTrainConstants {
+    public static final double deadZone=0.4;
+    public static final double zoomFactor = 2.0;
+    public static final double slowFactor = 0.85;
+    public static final double speedFactor = 0.825;
+    public static final double turnFactor = 0.925;
+    public static final double accel = 0.05;
+    
+  }
+
+
   public static final class DriveConstants {
     public static final int kLeftMotor1Port = 0;
     public static final int kLeftMotor2Port = 1;

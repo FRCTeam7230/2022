@@ -12,22 +12,23 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.DriveSubsystem;
 public class Mechanisms {
     private DriveSubsystem m_DriveSubsystem;
-    private CANSparkMax shooterMotor, conveyorMotor; 
+    private CANSparkMax shooterMotor, conveyorMotor, climberMotor; 
     private VictorSPX intakeMotor;
-    private Solenoid intakeSolenoid;
+    private Solenoid intakeSolenoid, climberSolenoid;
     private Joystick m_stick;
     private double leftEncoder, rightEncoder;
     private boolean previousState = false;
-    private Timer climbTimer = new Timer();
+    private Timer climberTimer = new Timer();
     private Timer shotTimer = new Timer();
-    public Mechanisms(Joystick stick, DriveSubsystem subsystem, CANSparkMax shooter, CANSparkMax conveyor, VictorSPX intake, Solenoid intakeSol){
+    public Mechanisms(Joystick stick, DriveSubsystem subsystem, CANSparkMax shooter, CANSparkMax conveyor, VictorSPX intake, Solenoid intakeSol, CANSparkMax climber, Solenoid climbSol){
         m_stick = stick;
         m_DriveSubsystem = subsystem;
         shooterMotor = shooter;
         conveyorMotor = conveyor;
         intakeMotor = intake;
         intakeSolenoid = intakeSol;
-
+        climberMotor = climber;
+        climberSolenoid = climbSol;
     }
     
    public void runCANMechanism(CANSparkMax motor, int button, double power, boolean invert, double offPower){
@@ -82,23 +83,6 @@ public class Mechanisms {
      
    }
  } 
-  public void runClimber(int button, double speed, CANSparkMax motor, Solenoid solenoid){
-    climbTimer.reset();
-    climbTimer.start();
-    if (climbTimer.get() < 4.0){
-      solenoid.set(true);
-      if (climbTimer.get()>1.0){
-        motor.set(speed);
-      }
-    }
-    if (climbTimer.get() > 4.0 && climbTimer.get() < 8.0){
-      solenoid.set(false);
-      if (climbTimer.get()>5.0 && climbTimer.get() < 8.0){
-        motor.set(speed);
-      }
-    }
-    
-  }
 // button1 = shoot, button2 = intake
   public void runShotAndIntake(int button1, int button2, double power, boolean enabled){
     boolean state1 = m_stick.getRawButton(button1);
@@ -155,5 +139,43 @@ public class Mechanisms {
       finished = true;
     }
     return finished;
+  }
+  /**
+   * Move climber up and down based on button A and X
+   * 
+   * @author  Branden Tang
+   */ 
+  
+  public void timerRestart(){
+    climberTimer.reset();
+    climberTimer.start();
+  }
+  public void runClimber(int BUTTON_X, int BUTTON_A) {
+
+    if (m_stick.getRawButton(BUTTON_X)) {//move climber up
+      climberSolenoid.set(m_stick.getRawButton(BUTTON_X));
+      timerRestart();
+
+      if (climberTimer.get() < 0.1) {
+        climberMotor.set(0.5);
+      }
+    }
+    else {
+      climberSolenoid.set(false);
+      climberMotor.set(0);
+    }
+
+    if (m_stick.getRawButton(BUTTON_A)) {//move climber down
+      // climberSolenoid.set(m_stick.getRawButton(BUTTON_A));
+      timerRestart();
+      
+      if (climberTimer.get() < 0.1) {
+        climberMotor.set(-0.5);
+      }
+    }
+    else {
+      // climberSolenoid.set(false);
+      climberMotor.set(0);
+    }
   }
 }
