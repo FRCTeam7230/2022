@@ -7,6 +7,7 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.DriveSubsystem;
@@ -154,11 +155,11 @@ public class Mechanisms {
 
     if (m_stick.getRawButton(BUTTON_X)) {//move climber up
       climberSolenoid.set(m_stick.getRawButton(BUTTON_X));
-      timerRestart();
-
-      if (climberTimer.get() < 0.1) {
-        climberMotor.set(0.5);
-      }
+      // timerRestart();
+      DriverStation.reportWarning("warning", true);
+      // if (climberTimer.get() < 0.1) {
+      climberMotor.set(-1);
+      // }
     }
     else {
       climberSolenoid.set(false);
@@ -167,11 +168,11 @@ public class Mechanisms {
 
     if (m_stick.getRawButton(BUTTON_A)) {//move climber down
       // climberSolenoid.set(m_stick.getRawButton(BUTTON_A));
-      timerRestart();
+      // timerRestart();
       
-      if (climberTimer.get() < 0.1) {
-        climberMotor.set(-0.5);
-      }
+      // if (climberTimer.get() < 0.1) {
+      climberMotor.set(1);
+      // }
     }
     else {
       // climberSolenoid.set(false);

@@ -117,7 +117,7 @@ public class Robot extends TimedRobot {
   private CANSparkMax climberMotor = new CANSparkMax(8, CANSparkMax.MotorType.kBrushless);
   private RelativeEncoder shooterEncoder = shooterMotor.getEncoder();
   private Compressor pcmCompressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-  private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
+  private Solenoid intakeSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 1);
   private Solenoid climberSolenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 2);
   NetworkTable table = NetworkTableInstance.getDefault().getTable("Circles");
   NetworkTableEntry bD = table.getEntry("Ball Distance");
