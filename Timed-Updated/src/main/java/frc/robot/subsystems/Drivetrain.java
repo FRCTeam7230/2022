@@ -29,10 +29,11 @@ public class Drivetrain {
         x *= Math.abs(x);
         int invertChangeY = 1;
         int invertChangeX = 1;
-        if (y<0){
+        // System.out.println(y + " " + speedY);
+        if (y< -1*driveTrainConstants.deadZone || (speedY<0 && Math.abs(y)<driveTrainConstants.deadZone)){
             invertChangeY = -1;
         }
-        if (x<0){
+        if (x<-1*driveTrainConstants.deadZone || (speedX<0 && Math.abs(x)<driveTrainConstants.deadZone)){
             invertChangeX = -1;
         }
         if(driveTrainConstants.deadZone < Math.abs(y) && Math.abs(y) > Math.abs(speedY)) {
@@ -46,11 +47,10 @@ public class Drivetrain {
         else if (driveTrainConstants.deadZone>=Math.abs(y) && Math.abs(speedY)<0.4){
             speedY=0;
         }
-        else if (driveTrainConstants.deadZone>=Math.abs(y) && Math.abs(speedY)>=0.4 && Math.abs(y) > 0.6){
-            speedY-=0.1*invertChangeY;
-        }
-        else if (driveTrainConstants.deadZone>=Math.abs(y) && Math.abs(speedY)>=0.4 && Math.abs(y) <= 0.6){
-            speedY-=0.2 * invertChangeY;
+        else if (driveTrainConstants.deadZone>=Math.abs(y) && Math.abs(speedY)>=0.4){
+            speedY-=0.075*invertChangeY;
+            // System.out.println("ASFJLKJ" + invertChangeY);
+            // DriverStation.reportWarning("warning", false);
         }
         if(driveTrainConstants.deadZone < Math.abs(x) && Math.abs(x) > Math.abs(speedX)) {
             speedX += invertChangeX * rateOfSpeedXChange;
@@ -64,11 +64,8 @@ public class Drivetrain {
         else if (driveTrainConstants.deadZone>=Math.abs(x) && Math.abs(speedX)<0.4){
             speedX=0;
         }
-        else if (driveTrainConstants.deadZone>=Math.abs(x) && Math.abs(speedX)>=0.4 && Math.abs(x) > 0.6){
-            speedX-=0.1*invertChangeX;
-        }
-        else if (driveTrainConstants.deadZone>=Math.abs(x) && Math.abs(speedX)>=0.4 && Math.abs(x) <= 0.6){
-            speedX-=0.2 * invertChangeX;
+        else if (driveTrainConstants.deadZone>=Math.abs(x) && Math.abs(speedX)>=0.4){
+            speedX-=0.075*invertChangeX;
         }
         if (Math.abs(x)<driveTrainConstants.deadZone && Math.abs(y)<driveTrainConstants.deadZone)
         {
@@ -78,10 +75,10 @@ public class Drivetrain {
             rateOfSpeedXChange = 0;
             rateOfSpeedYChange = 0;
             if (Math.abs(x)>driveTrainConstants.deadZone){
-                speedX+=0.2;
+                speedX+=0.2 * invertChangeX;
             }
             if (Math.abs(y)>driveTrainConstants.deadZone){
-                speedY+=0.2;
+                speedY+=0.2 * invertChangeY;
             }
         }
         // DriverStation.reportWarning("New Y,X: "+((Double)y).toString()+","+((Double)x).toString(),true);
@@ -96,8 +93,8 @@ public class Drivetrain {
             speedY*=driveTrainConstants.slowFactor;
             speedX*=driveTrainConstants.slowFactor; 
         }
-        x *= driveTrainConstants.turnFactor;
-        y *= driveTrainConstants.speedFactor;
+        // x *= driveTrainConstants.turnFactor;
+        // y *= driveTrainConstants.speedFactor;
         // IMPORTANT
         // I DONT KNOW WHY BUT X AND Y LIMITS HERE ARE SWITCHED
         if (speedX > 0){
