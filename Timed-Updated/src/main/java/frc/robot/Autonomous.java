@@ -44,7 +44,7 @@ public class Autonomous {
     // Third phase - findNewBall - turn around, find ball
     // Forth phase - grabBall - drive toward the ball and grab it then
 
-    if (!m_stick.getRawButton(4)) { //emergency button Y
+    // if (!m_stick.getRawButton(4)) { //emergency button Y
 
       // if (ballInIntake) {
       //    conveyor.set(0.5);
@@ -88,18 +88,17 @@ public class Autonomous {
 
         // Phase 4 - Drive towards the ball and grab it
         if (search4Ball) { // Minuses - if the ball is swinging, if Robot  detected another colored object, not the ball
-          m_dDriveSubsystem.drive(0.2, -0.2);
+          // m_dDriveSubsystem.drive(0.2, -0.2);
 
-          if ((autoState == "grabBall") || (autonomousTimer.get() > 0.1 && oldDistance4Ball/10 == ballDistance/10)) {
-            autoState = "grabBall";
-            m_dDriveSubsystem.drive(0,0);
+          // if (/*(autoState == "grabBall") || */(autonomousTimer.get() > 0.1 /*(&& oldDistance4Ball/10 == ballDistance/10*/)) {
+            // autoState = "grabBall";
+            // m_dDriveSubsystem.drive(0,0);
             
             
             intakeSol.set(true);
             intake.set(ControlMode.PercentOutput, 0.65);
             conveyor.set(0.5);
-            driveTrain.drive(true, driveModified);
-
+            // driveTrain.drive(true, driveModified);
             double speed = 0.7;
             double margin = 3;
             double angle = ballAngleX;
@@ -118,23 +117,23 @@ public class Autonomous {
             }
 
             ballInIntake = true;
-          }
+          // }
           
-          else {
-            oldDistance4Ball = ballDistance;
-            autonomousTimer.reset();
-            autonomousTimer.start();
-            System.out.println("Three phases completed. Waiting....");
-          }
+          // else {
+          //   oldDistance4Ball = ballDistance;
+          //   autonomousTimer.reset();
+          //   autonomousTimer.start();
+          //   System.out.println("Three phases completed. Waiting....");
+          // }
         }
         // Phase 5 - receive information from encoders - calculate the distance that the robot has traveled. 
         //Also, add code for "remembering" the angle of rotation of the robot - maybe encoder too.
         // Or, when moving to grab the ball, "remeber" the change in position (which direction they turned and how long) of left and right wheels - just turn in opposite direction
       }
-    }
-    else { 
-      System.out.println("Waiting....");
-    }
+    // }
+    // else { 
+    //   System.out.println("Waiting....");
+    // }
   }
   public void shootBall() {
     if (autonomousTimer.get() < 2.0) { // Run the shooter & conveyor for 2s

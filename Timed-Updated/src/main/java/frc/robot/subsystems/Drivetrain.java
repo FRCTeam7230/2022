@@ -85,11 +85,12 @@ public class Drivetrain {
         // R Bumper is 6
         if(m_stick.getRawButton(robotConstants.L_BUMPER)){
             speedY*=driveTrainConstants.zoomFactor;
+            speedX *= driveTrainConstants.zoomFactor;
         }
         
         if(m_stick.getRawButton(robotConstants.R_BUMPER)){
             speedX=x;
-            speedY = y;
+            speedY=y;
             speedY*=driveTrainConstants.slowFactor;
             speedX*=driveTrainConstants.slowFactor; 
         }

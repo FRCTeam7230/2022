@@ -19,6 +19,8 @@ public class Mechanisms {
     private Joystick m_stick;
     private double leftEncoder, rightEncoder;
     private boolean previousState = false;
+    private boolean previousClimb = false;
+    private boolean currentClimb;
     private Timer climberTimer = new Timer();
     private Timer shotTimer = new Timer();
     public Mechanisms(Joystick stick, DriveSubsystem subsystem, CANSparkMax shooter, CANSparkMax conveyor, VictorSPX intake, Solenoid intakeSol, CANSparkMax climber, Solenoid climbSol){
@@ -152,14 +154,22 @@ public class Mechanisms {
     climberTimer.start();
   }
   public void runClimber(int BUTTON_X, int BUTTON_A) {
-
-    if (m_stick.getRawButton(BUTTON_X)) {//move climber up
+    currentClimb = m_stick.getRawButton(BUTTON_X);
+    if (currentClimb && !previousClimb){
+      timerRestart();
+    }
+    if (currentClimb) {//move climber up
       climberSolenoid.set(m_stick.getRawButton(BUTTON_X));
       // timerRestart();
-      DriverStation.reportWarning("warning", true);
-      // if (climberTimer.get() < 0.1) {
-      climberMotor.set(-1);
-      // }
+      // DriverStation.reportWarning("RUN CLIMBER", true);
+      if (climberTimer.get() < 0.1) {
+        System.out.println("RUNNING CLIMB BACK");
+        climberMotor.set(1);
+        }
+      else {
+        System.out.println("RUNNING CLIMB ");
+        climberMotor.set(-1);
+        }
     }
     else {
       climberSolenoid.set(false);
@@ -171,12 +181,13 @@ public class Mechanisms {
       // timerRestart();
       
       // if (climberTimer.get() < 0.1) {
-      climberMotor.set(1);
+      climberMotor.set(0.8);
       // }
     }
     else {
       // climberSolenoid.set(false);
       climberMotor.set(0);
     }
+    previousClimb = currentClimb;
   }
 }
