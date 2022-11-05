@@ -287,7 +287,7 @@ public class Robot extends TimedRobot {
         intakeMotor.set(ControlMode.PercentOutput, 0.65);
         conveyorMotor.set(0.5);
         // DriverStation.reportWarning("ANGLE: "+Double.toString(angle),true);
-        double speed = 0.7;
+        double speed = 0.9;
         double margin = 3;
         double angle = ballAngleX;
         if (angle>0 && angle>margin){
