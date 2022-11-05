@@ -24,14 +24,14 @@ public final class Constants {
     public static final int L2MOTOR_ID = 2;
     public static final int R2MOTOR_ID = 4;
     
-    public static final int X_BUTTON = 1; //CLIMBER UP
-    public static final int A_BUTTON = 2; //CLIMBER DOWN
-    public static final int B_BUTTON = 3; //SMART VISION INTAKE
-    public static final int Y_BUTTON = 4; //REVERSE
-    public static final int L_BUMPER = 5; //SPEED
-    public static final int R_BUMPER = 6; //SLOW
-    public static final int L_TRIGGER = 7; //SHOOT
-    public static final int R_TRIGGER = 8; //INTAKE
+    public static final int X_BUTTON = 1; //X BUTTON: CLIMBER UP
+    public static final int A_BUTTON = 2; //A BUTTON: CLIMBER DOWN
+    public static final int B_BUTTON = 3; //B BUTTON: SMART VISION INTAKE
+    public static final int Y_BUTTON = 4; //Y BUTTON: REVERSE
+    public static final int L_BUMPER = 5; //L BUMPER: SPEED
+    public static final int R_BUMPER = 6; //R BUMPER: SLOW
+    public static final int L_TRIGGER = 7; //L TRIGGER: SHOOT
+    public static final int R_TRIGGER = 8; //R TRIGGER: INTAKE
     public static final int BACK_BUTTON = 9; 
     public static final int START_BUTTON = 10;
     public static final int L_JOYSTICK_PRESS = 11;

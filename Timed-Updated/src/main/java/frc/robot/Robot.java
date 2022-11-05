@@ -125,6 +125,7 @@ public class Robot extends TimedRobot {
   NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
   private Mechanisms mechanisms = new Mechanisms(m_stick, m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid, climberMotor, climberSolenoid);
   private Autonomous auton = new Autonomous(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid);
+  private OldAutonomous autonOld = new OldAutonomous(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid);
   // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);
   //  Pathweaver
@@ -247,6 +248,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     auton.init();
+    autonOld.init();
   }
 
   /**
@@ -255,6 +257,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     auton.execute(ballDistance, ballAngleX);
+    // autonOld.execute();
   }
 
   /**
