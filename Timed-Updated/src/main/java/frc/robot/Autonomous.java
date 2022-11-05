@@ -106,7 +106,7 @@ public class Autonomous {
             intake.set(ControlMode.PercentOutput, 0.65);
             conveyor.set(0.5);
             // driveTrain.drive(true, driveModified);
-            double speed = 0.7;
+            double speed = 0.9;
             double margin = 3;
             double angle = ballAngleX;
 
