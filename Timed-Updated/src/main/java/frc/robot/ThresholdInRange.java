@@ -57,10 +57,14 @@ public class ThresholdInRange {
                 new Scalar(15, 255, 255), thresh);
         }
         else{
+            //Old Values for blue:
+            // Core.inRange(frameHSV, new Scalar(95, 50, 0),
+            //         new Scalar(110, 255, 255), thresh);
+            // New values for Blue: Low HSV; 90, 110, 110 High HSV; 110, 255, 255
             Core.inRange(frameHSV, new Scalar(90, 110, 110), //100,
                     new Scalar(120, 200, 255), thresh);
+           
         }
-        
     
     List<Mat> frames = new ArrayList<Mat>(); //new List<Mat>();
         Core.split(thresh, frames);
