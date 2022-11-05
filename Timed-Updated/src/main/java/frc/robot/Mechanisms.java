@@ -184,7 +184,7 @@ public class Mechanisms {
       climberMotor.set(0.8);
       // }
     }
-    else {
+    else if (!m_stick.getRawButton(BUTTON_X)){
       // climberSolenoid.set(false);
       climberMotor.set(0);
     }

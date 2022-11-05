@@ -145,7 +145,12 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Arcade", arcade);
     m_chooser.addOption("Tank", tankOption);
     SmartDashboard.putData("Driver choices", m_chooser);
- 
+    // color_chooser.setDefaultOption("Red", "red");
+    color_chooser.setDefaultOption("Blue", "blue");
+    // color_chooser.addOption("Blue", "blue");
+    color_chooser.addOption("Red", "red");
+    SmartDashboard.putData("Color choice", color_chooser);
+    
     SmartDashboard.putString("Shooter Adjustment", speedStr);
     SmartDashboard.putString("Climb Adjustment", climbStr);
     SmartDashboard.putNumber("Shooter Speed", shooterEncoder.getVelocity());
@@ -209,11 +214,6 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Ball Distance", ballDistance);
     SmartDashboard.putNumber("Angle X", ballAngleX);
     SmartDashboard.putNumber("Shooting Velocity", shooterEncoder.getVelocity());
-    // color_chooser.setDefaultOption("Red", "red");
-    color_chooser.setDefaultOption("Blue", "blue");
-    // color_chooser.addOption("Blue", "blue");
-    color_chooser.addOption("Red", "red");
-    SmartDashboard.putData("Color choice", color_chooser);
     bAngleX.setDouble(1);
     bAngleY.setDouble(1);
     bD.setDouble(ballDistance);
