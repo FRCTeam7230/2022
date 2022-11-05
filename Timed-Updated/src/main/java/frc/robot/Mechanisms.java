@@ -90,6 +90,7 @@ public class Mechanisms {
   public void runShotAndIntake(int button1, int button2, int button3, double power, boolean enabled){
     boolean state1 = m_stick.getRawButton(button1);
     boolean state2 = m_stick.getRawButton(button2); 
+    boolean state3 = m_stick.getRawButton(button3); 
       double newPower = power;
       //  if (state && !previousState){
       //    motor.set(-offPower);
@@ -118,11 +119,11 @@ public class Mechanisms {
       else{
         shooterMotor.set(-newPower/10);
       }
-      if(state2){
+      if(state2 || state3){
           // DriverStation.reportWarning("running button "+button2+"fwd",true);
           conveyorMotor.set(0.5);
       }
-      if (!state1 && !state2){
+      if (!state1 && !state2 && !state3){
         conveyorMotor.set(0);
       }
       runPneumaticSolenoid(intakeSolenoid, button2, enabled);
