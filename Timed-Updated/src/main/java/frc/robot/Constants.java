@@ -33,7 +33,7 @@ public final class Constants {
     public static final int L_TRIGGER = 7; //L TRIGGER: SHOOT
     public static final int R_TRIGGER = 8; //R TRIGGER: INTAKE
     public static final int BACK_BUTTON = 9; 
-    public static final int START_BUTTON = 10;
+    public static final int START_BUTTON = 10; //START BUTTON: RUN INTAKE MOTOR/NO SOLENOID
     public static final int L_JOYSTICK_PRESS = 11;
     public static final int R_JOYSTICK_PRESS = 12;
 

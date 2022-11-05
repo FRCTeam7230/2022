@@ -276,7 +276,7 @@ public class Robot extends TimedRobot {
     shootingPower = Double.parseDouble(speedStr);
     climbPower = Double.parseDouble(climbStr);
   
-    mechanisms.runShotAndIntake(robotConstants.L_TRIGGER,robotConstants.R_TRIGGER, shootingPower, true);
+    mechanisms.runShotAndIntake(robotConstants.L_TRIGGER,robotConstants.R_TRIGGER, robotConstants.START_BUTTON, shootingPower, true);
     driveTrain.drive(tank, driveModified);
     mechanisms.runClimber(robotConstants.X_BUTTON, robotConstants.A_BUTTON);
     nowState = m_stick.getRawButton(robotConstants.B_BUTTON);

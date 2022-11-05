@@ -49,12 +49,12 @@ public class Mechanisms {
      
    } 
 
-   public void runSPXMechanism(VictorSPX motor, int button, double power, boolean invert){
+   public void runSPXMechanism(VictorSPX motor, int button1, int button2, double power, boolean invert){
     double newPower = power;
     if (invert){
       newPower*=-1;
     }
-    if(m_stick.getRawButton(button)){
+    if(m_stick.getRawButton(button1) || m_stick.getRawButton(button2)){
         // DriverStation.reportWarning("running spxbutton "+button+"fwd",true);
         motor.set(ControlMode.PercentOutput,newPower);
     }
@@ -87,7 +87,7 @@ public class Mechanisms {
    }
  } 
 // button1 = shoot, button2 = intake
-  public void runShotAndIntake(int button1, int button2, double power, boolean enabled){
+  public void runShotAndIntake(int button1, int button2, int button3, double power, boolean enabled){
     boolean state1 = m_stick.getRawButton(button1);
     boolean state2 = m_stick.getRawButton(button2); 
       double newPower = power;
@@ -126,7 +126,7 @@ public class Mechanisms {
         conveyorMotor.set(0);
       }
       runPneumaticSolenoid(intakeSolenoid, button2, enabled);
-      runSPXMechanism(intakeMotor, button2, 0.65, false);
+      runSPXMechanism(intakeMotor, button2, button3, 0.65, false);
   }
 
   public boolean driveSetDistance(double distance, double speed){
