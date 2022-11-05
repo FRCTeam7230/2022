@@ -124,7 +124,7 @@ public class Robot extends TimedRobot {
   NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
   NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
   private Mechanisms mechanisms = new Mechanisms(m_stick, m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid, climberMotor, climberSolenoid);
-  private Autonomous auton = new Autonomous(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid);
+  private Autonomous auton = new Autonomous(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid, mechanisms);
   private OldAutonomous autonOld = new OldAutonomous(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid);
   // Mechanism (mode id forward backward power)   
   // private Mechanism intake = new Mechanism("button",1,4,7,0.8);

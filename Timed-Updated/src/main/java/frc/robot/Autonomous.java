@@ -23,7 +23,7 @@ public class Autonomous {
   private Joystick m_stick;
   public boolean ballInIntake = true; //if the robot took the ball - true, did not take - fall
 
-  public Autonomous(DriveSubsystem subsystem, CANSparkMax shooterMotor, CANSparkMax conveyorMotor, VictorSPX intakeMotor, Solenoid intakeSolenoid){
+  public Autonomous(DriveSubsystem subsystem, CANSparkMax shooterMotor, CANSparkMax conveyorMotor, VictorSPX intakeMotor, Solenoid intakeSolenoid, Mechanisms mech){
     m_dDriveSubsystem = subsystem;
     m_dDriveSubsystem.resetEncoders();
     shooter = shooterMotor;
@@ -31,6 +31,7 @@ public class Autonomous {
     intake = intakeMotor;
     intakeSol = intakeSolenoid;
     autoState = "firstDrive";
+    mechanisms = mech;
   }
   public void init(){
     m_dDriveSubsystem.resetEncoders();    
@@ -51,15 +52,21 @@ public class Autonomous {
       // }
 
       // Phase 1 - Move forward to the hub
-      if (autoState == "firstDrive") { 
-        if (mechanisms.driveSetDistance(0.15, 0.5)){ 
-            m_dDriveSubsystem.arcadeDrive(0, 0);
-            autonomousTimer.reset();
-            autonomousTimer.start();
+      if (autoState == "firstDrive") {
+        System.out.println(autonomousTimer.get());
+        if (autonomousTimer.get()<2.0){ 
+          m_dDriveSubsystem.arcadeDrive(0,0);
+            // m_dDriveSubsystem.arcadeDrive(0, 0);
+            // autonomousTimer.reset();
+            // autonomousTimer.start();
+          // shootBall();
+          conveyor.set(0.5); 
+          shooter.set(0.5);
         }
         else {
-          shootBall();
           autoState = "secondDrive";
+          autonomousTimer.reset();
+          autonomousTimer.start();
         }
       } 
 
