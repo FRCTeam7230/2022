@@ -22,6 +22,7 @@ public class Autonomous {
   private boolean driveModified = false;  
   private Joystick m_stick;
   public boolean ballInIntake = true; //if the robot took the ball - true, did not take - fall
+  public boolean foundBall = false; 
 
   public Autonomous(DriveSubsystem subsystem, CANSparkMax shooterMotor, CANSparkMax conveyorMotor, VictorSPX intakeMotor, Solenoid intakeSolenoid){
     m_dDriveSubsystem = subsystem;
@@ -37,7 +38,7 @@ public class Autonomous {
     autonomousTimer.reset();
     autonomousTimer.start();
   }
-  public void execute(double ballDistance, double ballAngleX){
+  public void execute(double ballDistance, double ballAngleX, double ballRadius){
 
     // First phase - drive - drive to the hub and shoot ball
     // Second phase - drive backwards
@@ -88,6 +89,7 @@ public class Autonomous {
 
         // Phase 4 - Drive towards the ball and grab it
         if (search4Ball) { // Minuses - if the ball is swinging, if Robot  detected another colored object, not the ball
+<<<<<<< Updated upstream
           m_dDriveSubsystem.drive(0.2, -0.2);
 
           if ((autoState == "grabBall") || (autonomousTimer.get() > 0.1 && oldDistance4Ball/10 == ballDistance/10)) {
@@ -95,6 +97,18 @@ public class Autonomous {
             m_dDriveSubsystem.drive(0,0);
             
             
+=======
+          
+          if (!foundBall && ballRadius <= 9) {
+            m_dDriveSubsystem.drive(0.2, -0.2);
+          }
+          else {
+            foundBall = true;
+          // if (/*(autoState == "grabBall") || */(autonomousTimer.get() > 0.1 /*(&& oldDistance4Ball/10 == ballDistance/10*/)) {
+            // autoState = "grabBall";
+            // m_dDriveSubsystem.drive(0,0);
+                      
+>>>>>>> Stashed changes
             intakeSol.set(true);
             intake.set(ControlMode.PercentOutput, 0.65);
             conveyor.set(0.5);
