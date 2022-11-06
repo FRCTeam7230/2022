@@ -89,15 +89,6 @@ public class Autonomous {
 
         // Phase 4 - Drive towards the ball and grab it
         if (search4Ball) { // Minuses - if the ball is swinging, if Robot  detected another colored object, not the ball
-<<<<<<< Updated upstream
-          m_dDriveSubsystem.drive(0.2, -0.2);
-
-          if ((autoState == "grabBall") || (autonomousTimer.get() > 0.1 && oldDistance4Ball/10 == ballDistance/10)) {
-            autoState = "grabBall";
-            m_dDriveSubsystem.drive(0,0);
-            
-            
-=======
           
           if (!foundBall && ballRadius <= 9) {
             m_dDriveSubsystem.drive(0.2, -0.2);
@@ -108,7 +99,6 @@ public class Autonomous {
             // autoState = "grabBall";
             // m_dDriveSubsystem.drive(0,0);
                       
->>>>>>> Stashed changes
             intakeSol.set(true);
             intake.set(ControlMode.PercentOutput, 0.65);
             conveyor.set(0.5);
@@ -133,6 +123,7 @@ public class Autonomous {
 
             ballInIntake = true;
           }
+        }
           
           else {
             oldDistance4Ball = ballDistance;
@@ -145,7 +136,7 @@ public class Autonomous {
         //Also, add code for "remembering" the angle of rotation of the robot - maybe encoder too.
         // Or, when moving to grab the ball, "remeber" the change in position (which direction they turned and how long) of left and right wheels - just turn in opposite direction
       }
-    }
+    
     else { 
       System.out.println("Waiting....");
     }

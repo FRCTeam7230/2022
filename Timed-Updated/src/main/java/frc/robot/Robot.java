@@ -318,12 +318,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-<<<<<<< Updated upstream
-    auton.execute(ballDistance, ballAngleX);
-=======
     auton.execute(ballDistance, ballAngleX, vision.getRadius());
     // autonOld.execute();
->>>>>>> Stashed changes
   }
 
   /**
