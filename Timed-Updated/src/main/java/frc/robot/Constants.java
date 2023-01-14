@@ -24,18 +24,21 @@ public final class Constants {
     public static final int L2MOTOR_ID = 2;
     public static final int R2MOTOR_ID = 4;
     
-    public static final int X_BUTTON = 1; //X BUTTON: CLIMBER UP
-    public static final int A_BUTTON = 2; //A BUTTON: CLIMBER DOWN
-    public static final int B_BUTTON = 3; //B BUTTON: SMART VISION INTAKE
-    public static final int Y_BUTTON = 4; //Y BUTTON: REVERSE
-    public static final int L_BUMPER = 5; //L BUMPER: SPEED
-    public static final int R_BUMPER = 6; //R BUMPER: SLOW
-    public static final int L_TRIGGER = 7; //L TRIGGER: SHOOT
-    public static final int R_TRIGGER = 8; //R TRIGGER: INTAKE
-    public static final int BACK_BUTTON = 9; 
-    public static final int START_BUTTON = 10; //START BUTTON: RUN INTAKE MOTOR/NO SOLENOID
-    public static final int L_JOYSTICK_PRESS = 11;
-    public static final int R_JOYSTICK_PRESS = 12;
+    // Documentation of joystick.
+    // https://docs.wpilib.org/en/stable/docs/software/basic-programming/joystick.html
+
+    public static final int BUTTON1 = 1; //X BUTTON: CLIMBER UP
+    public static final int BUTTON2 = 2; //A BUTTON: CLIMBER DOWN
+    public static final int BUTTON3 = 3; //B BUTTON: SMART VISION INTAKE
+    public static final int BUTTON4 = 4; //Y BUTTON: REVERSE
+    public static final int BUTTON5 = 5; //L BUMPER: SPEED
+    public static final int BUTTON6 = 6; //R BUMPER: SLOW
+    public static final int BUTTON7 = 7; //L TRIGGER: SHOOT
+    public static final int BUTTON8 = 8; //R TRIGGER: INTAKE
+    public static final int BUTTON9 = 9; 
+    public static final int BUTTON10 = 10; //START BUTTON: RUN INTAKE MOTOR/NO SOLENOID
+    public static final int BUTTON11 = 11;
+    public static final int BUTTON12 = 12;
 
 
   }

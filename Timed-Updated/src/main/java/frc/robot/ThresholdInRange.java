@@ -34,6 +34,8 @@ public class ThresholdInRange {
     private static double cameraAngle = 55.0;//change this to another angle from flour
     public static double ballDistance;
     public static double ballAngleX, ballAngleY;
+
+    public static double ballRadiusScreen = 0;
     
     // private VideoCapture cap;
     // private Mat matFrame = new Mat();
@@ -86,6 +88,8 @@ public class ThresholdInRange {
             int cX = (int) Math.round(c[0]/5 - 1)*5; //coordinatesX and coordinatesY
             int cY = (int) Math.round(c[1]/5 - 1)*5;
             int radius = (int) Math.round(c[2]);
+            //System.out.println(radius);
+            ballRadiusScreen = radius;
                     
             // String coordinateXY = cX + "," + cY;
                     
@@ -119,6 +123,9 @@ public class ThresholdInRange {
    
     public double getDistance(){
         return ballDistance;
+    }
+    public double getRadius(){
+        return ballRadiusScreen;
     }
     public double getAngleX() {
         return ballAngleX;

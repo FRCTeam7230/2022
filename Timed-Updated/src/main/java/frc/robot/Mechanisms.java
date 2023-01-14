@@ -22,6 +22,7 @@ public class Mechanisms {
     private boolean previousClimb = false;
     private boolean currentClimb;
     private Timer climberTimer = new Timer();
+    
     private Timer shotTimer = new Timer();
     public Mechanisms(Joystick stick, DriveSubsystem subsystem, CANSparkMax shooter, CANSparkMax conveyor, VictorSPX intake, Solenoid intakeSol, CANSparkMax climber, Solenoid climbSol){
         m_stick = stick;
@@ -180,7 +181,7 @@ public class Mechanisms {
     if (m_stick.getRawButton(BUTTON_A)) {//move climber down
       // climberSolenoid.set(m_stick.getRawButton(BUTTON_A));
       // timerRestart();
-      
+      System.out.println("RUNNING CLIMB DOWN");
       // if (climberTimer.get() < 0.1) {
       climberMotor.set(0.8);
       // }

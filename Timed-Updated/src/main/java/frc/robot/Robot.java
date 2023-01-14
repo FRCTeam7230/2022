@@ -63,13 +63,14 @@ import com.revrobotics.RelativeEncoder;
 
 public class Robot extends TimedRobot {
   private String m_autoSelected, colorSelected;
-  private String speedStr = "0.6";
-  private double shootingPower = 0.6;
+  private String speedStr = "0.3";
+  private double shootingPower = 0.3;
   private String climbStr = "0.5";
   private double climbPower = 0.5;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   private final SendableChooser<String> color_chooser = new SendableChooser<>();
-  private Joystick m_stick = new Joystick(0);
+  private Joystick drive_stick = new Joystick(0);
+  private Joystick mechanism_stick = new Joystick(1);
   private int width = 160, height = 120;
   private String statusString = "not Running";
   // Pathweaver related
@@ -82,7 +83,7 @@ public class Robot extends TimedRobot {
   private static final String tankOption = "tank mod";
   private boolean prevState = false;
   private boolean driveModified = false;  
-  public Drivetrain driveTrain = new Drivetrain(m_robotDrive, m_stick);
+  public Drivetrain driveTrain = new Drivetrain(m_robotDrive, drive_stick);
   double ballDistance, ballAngleX;
   double initialBallDistance;
   private ThresholdInRange vision = new ThresholdInRange();
@@ -123,7 +124,7 @@ public class Robot extends TimedRobot {
   NetworkTableEntry bD = table.getEntry("Ball Distance");
   NetworkTableEntry bAngleX = table.getEntry("Ball Angle X");
   NetworkTableEntry bAngleY = table.getEntry("Ball Angle Y");
-  private Mechanisms mechanisms = new Mechanisms(m_stick, m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid, climberMotor, climberSolenoid);
+  private Mechanisms mechanisms = new Mechanisms(mechanism_stick, m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid, climberMotor, climberSolenoid);
   private Autonomous auton = new Autonomous(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid, mechanisms);
   private OldAutonomous autonOld = new OldAutonomous(m_robotDrive, shooterMotor, conveyorMotor, intakeMotor, intakeSolenoid);
   // Mechanism (mode id forward backward power)   
@@ -145,10 +146,10 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Arcade", arcade);
     m_chooser.addOption("Tank", tankOption);
     SmartDashboard.putData("Driver choices", m_chooser);
-    // color_chooser.setDefaultOption("Red", "red");
-    color_chooser.setDefaultOption("Blue", "blue");
-    // color_chooser.addOption("Blue", "blue");
-    color_chooser.addOption("Red", "red");
+    color_chooser.setDefaultOption("Red", "red");
+    // color_chooser.setDefaultOption("Blue", "blue");
+    color_chooser.addOption("Blue", "blue");
+    // color_chooser.addOption("Red", "red");
     SmartDashboard.putData("Color choice", color_chooser);
     
     SmartDashboard.putString("Shooter Adjustment", speedStr);
@@ -276,15 +277,15 @@ public class Robot extends TimedRobot {
     shootingPower = Double.parseDouble(speedStr);
     climbPower = Double.parseDouble(climbStr);
   
-    mechanisms.runShotAndIntake(robotConstants.L_TRIGGER,robotConstants.R_TRIGGER, robotConstants.START_BUTTON, shootingPower, true);
+    mechanisms.runShotAndIntake(robotConstants.SHOOT_BUTTON,robotConstants.INTAKE_BUTTON, robotConstants.INTAKE_MOTOR_BUTTON, shootingPower, true);
     driveTrain.drive(tank, driveModified);
-    mechanisms.runClimber(robotConstants.X_BUTTON, robotConstants.A_BUTTON);
-    nowState = m_stick.getRawButton(robotConstants.B_BUTTON);
+    mechanisms.runClimber(robotConstants.CLIMBER_UP_BUTTON, robotConstants.CLIMBER_DOWN_BUTTON);
+    nowState = drive_stick.getRawButton(robotConstants.SMART_INTAKE_BUTTON);
     if (prevState == false && nowState == true){
       m_robotDrive.resetEncoders();
       initialBallDistance = ballDistance;
     }
-    prevState=m_stick.getRawButton(robotConstants.B_BUTTON);
+    prevState=drive_stick.getRawButton(robotConstants.SMART_INTAKE_BUTTON);
     if (nowState){
         intakeSolenoid.set(nowState);
         intakeMotor.set(ControlMode.PercentOutput, 0.65);

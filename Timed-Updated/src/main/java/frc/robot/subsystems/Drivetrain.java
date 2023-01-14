@@ -83,12 +83,12 @@ public class Drivetrain {
         }
         // DriverStation.reportWarning("New Y,X: "+((Double)y).toString()+","+((Double)x).toString(),true);
         // R Bumper is 6
-        if(m_stick.getRawButton(robotConstants.L_BUMPER)){
+        if(m_stick.getRawButton(robotConstants.BUTTON5)){
             speedY*=driveTrainConstants.zoomFactor;
             speedX *= driveTrainConstants.zoomFactor;
         }
         
-        if(m_stick.getRawButton(robotConstants.R_BUMPER)){
+        if(m_stick.getRawButton(robotConstants.BUTTON6)){
             speedX=x;
             speedY=y;
             speedY*=driveTrainConstants.slowFactor;
@@ -120,11 +120,11 @@ public class Drivetrain {
             DriverStation.reportWarning(Double.toString(speedY), false);
             m_robotDrive.arcadeDrive(-1 * invertAxis * (speedY), invertAxis *(speedX));
         }
-        // if (m_stick.getRawButton(robotConstants.START_BUTTON)){
+        // if (m_stick.getRawButton(robotConstants.BUTTON10)){
         //     m_robotDrive.resetEncoders();
         // }
         // ballDistance*=0.01;
-        swapState = m_stick.getRawButton(robotConstants.Y_BUTTON);
+        swapState = m_stick.getRawButton(robotConstants.BUTTON4);
         if (swapState == true && prevState == false){
             invertAxis *= -1;
             prevState = true;
